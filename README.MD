@@ -1,4 +1,4 @@
-#**OBJ Loader**
+# **OBJ Loader**
 
 Reads Wavefront .obj files, and returns data in a format 
 usable for OpenGL rendering.
@@ -6,18 +6,18 @@ usable for OpenGL rendering.
 Slow and not completely functional yet. Currently can only parse one 
 object group, and does not yet support materials.
 
-##Functions
+## Functions
 
-###Mesh loadObjFromPath(const char* path)--
+### Mesh loadObjFromPath(const char* path)--
 
 Parses .obj file at path, initializes OpenGL buffers & vertex attributes,
 returns Mesh struct containing VAO, vertex/indice buffers.
 
-###void drawMesh(Mesh mesh);
+### void drawMesh(Mesh mesh);
 
 Uses VAO, vertices, & indices in Mesh to draw. Shader must be set up by
 user.
 
-##Building
+## Building
 
 Add GLFW3 and GLAD headers to solution, build solution.
