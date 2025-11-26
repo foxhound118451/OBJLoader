@@ -1,5 +1,4 @@
-#ifndef MODEL_H
-#define MODEL_H
+#pragma once
 
 #include <vector>
 
@@ -33,4 +32,3 @@ struct Mesh
 //prototypes;
 void drawMesh(Mesh mesh);
 Mesh loadObjFromPath(const char* path);
-#endif

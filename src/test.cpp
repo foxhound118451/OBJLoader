@@ -1,305 +1,191 @@
+/*
+* Temporary file used for debugging model loader.
+*/
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <model.h>
-#include <iostream>
-#include <fstream>
-#include <unordered_map>
-#include <string>
-#include <string.h>
-#include <stdexcept>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
+using namespace glm;
 using namespace std;
+#include <string>
+#include <iostream>
 
-struct input_buffers
+#include <shader.h>
+#include <camera.h>
+#include <model.h>
+
+void processInput(GLFWwindow* window);
+static void windowSizeCallback(GLFWwindow* window, int width, int height);
+static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+float cameraSensitivity = 500.0f;
+float cameraSpeed = 10.0f;
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+double prev_x = 0.0;
+double prev_y = 0.0;
+int s_width = 1280;
+int s_height = 720;
+
+Camera camera(vec3(0.0, 2.0f, 3.0f), vec3(0.0, 1.0f, 0.0f));
+int main()
 {
-	vector<float> vertices;
-	vector<float> tex_coords;
-	vector<float> normals;
-	vector<unsigned int> indices;
-};
-
-struct output_buffers
-{
-	vector<Vertex> *vertices;
-	vector<unsigned int> *indices;
-};
-
-//prototypes
-static int parse_obj_file(const char* file_path, output_buffers output_buffers);
-static void parse_vertex(char* line, vector<float>* vertices);
-static inline void parse_texcoord(char* line, vector<float>* texcoords);
-static void parse_face(char* line, input_buffers input_buffers, output_buffers output_buffers, unordered_map<string, unsigned int> *vertex_map);
-static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers input_buffers, output_buffers output_buffers, unordered_map<string, unsigned int>* vertex_map);
-static vector<unsigned int> fan_triangulate(vector<unsigned int>* face);
-
-//global flags
-static bool has_tex_coords = false;
-static bool has_normals = false;
-
-void drawMesh(Mesh mesh)
-{
-	glBindVertexArray(mesh.VAO);
-	glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
-}
-
-
-/*
-	Parse Wavefront .obj file into Mesh struct, set VAO of Mesh -1 on failure.
-	Path is relative to resources/models
-*/
-Mesh loadObjFromPath(const char* path)
-{
-	Mesh mesh;
-
-	vector<Vertex> vertices;
-	vector<unsigned int> indices;
-	output_buffers output_buffers = {&vertices, &indices};
-
-	//if (!parse_obj_file(path, output_buffers))
-	parse_obj_file(path, output_buffers);
-	//{
-		//parse faces, use indices to create final vertex & indice array.
-
-		mesh.vertices = *output_buffers.vertices;
-		mesh.indices = *output_buffers.indices;
-		unsigned int VBO;
-		unsigned int EBO;
-
-		glGenVertexArrays(1, &mesh.VAO);
-		glGenBuffers(1, &VBO);
-		glGenBuffers(1, &EBO);		
-		
-		glBindVertexArray(mesh.VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
-		glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), mesh.vertices.data(), GL_STATIC_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), mesh.indices.data(), GL_STATIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)0); //position
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tx))); //texcoord
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, nx))); //normal
-
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-
-		return mesh;
-	//}
-	//else
-	//{
-		//cout << "Failed parsing .obj file at path: " << path << endl;
-		//return mesh;
-	//}
-}
-
-/*
-* Parse .obj file at path and store vertices/tex_coords/normals/faces into given vectors. Return 0 on success, -1 on error.
-*/
-static int parse_obj_file(const char *file_path, output_buffers output_buffers)
-{		
-	ifstream file = ifstream(file_path);
-	if (file.fail()) {
-		cout << "ERROR: Failed opening .obj file at path: " << file_path << endl;
+	if (!glfwInit())
+	{
+		std::cout << "Failed to initialize GLFW." << endl;
 		return -1;
 	}
 
-	vector<Vertex> vertices;
-	unordered_map<string, unsigned int> vertex_map;
-	input_buffers input_buffers;
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	GLFWwindow* window = glfwCreateWindow(s_width, s_height, "OpenGL", NULL, NULL);
 
-	/*
-	* First, parse vertices, vertex texture coordinates, vertex normal coordinates into separate arrays.
-	* Then, parse faces (indices of vertex/vertex texture/vertex normal).  
-	* Use fan triangulation to convert any polygonal face into triangles
-	*
-	* Next, copy vertex indices from faces into indice array;
-	* Then, read faces, grab indices of vertex texture coordinates, & vertex normals,
-	* combine them with corresponding vertex in new vertex array.
-	*/
-	while (!(file.eof()  || file.fail())) //parse line by line
+	if (!window)
 	{
-		char line[256]; 
-		file.getline(line, 256);
-
-		//read all vertices, texture coordinates, normals into corresponding buffers,
-		//read faces into buffer
-		//parse face buffer, new vertex array with corresponding texture coordinates/normals
-
-		switch (*line)
-		{
-			case 'v': //parse vertex
-			{
-				switch (line[1])
-				{
-					case 't': //vertex texture
-						has_tex_coords = true;
-						parse_texcoord(line, &input_buffers.tex_coords);
-						break;
-					case 'n': //vertex normal
-						has_normals = true;
-						parse_vertex(line, &input_buffers.normals);
-						break;
-					case ' ': //vertex
-						parse_vertex(line, &input_buffers.vertices);
-						break;
-				}
-				break;
-			}
-			case 'f':
-			{
-				parse_face(line, input_buffers, output_buffers, &vertex_map);
-				break;
-			}
-		}
-	}
-	file.close();
-	if (file.fail())
-	{
-		cerr << "ERROR: Failed reading from file at path: " << file_path << endl;
+		cout << "Failed to create GLFW window" << endl;
+		glfwTerminate();
 		return -1;
 	}
-	else
+	glfwMakeContextCurrent(window);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
-		return 0;
+		cout << "Failed to initialize GLAD" << endl;
+		return -1;
 	}
-}
-static inline void parse_texcoord(char* line, vector<float>* texcoords)
-{
+
+	//set callbacks
+	glfwSetWindowSizeCallback(window, windowSizeCallback);
+	glfwSetCursorPosCallback(window, cursorPosCallback);
 	
-	char* strtok_state{};
-	char* texcoord = strtok_s(line, " ", &strtok_state);
+	glViewport(0, 0, s_width, s_height);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	texcoord = strtok_s(NULL, " ", &strtok_state);
-	(*texcoords).push_back(stof(texcoord));
-	texcoord = strtok_s(NULL, " ", &strtok_state);
-	(*texcoords).push_back(stof(texcoord));
-}
+	Shader shader = Shader("src/cube.vert", "src/cube.frag");
+	shader.use();
 
-/*
-* Parse vertex/vertex normal into given vector
-*/
-inline void parse_vertex(char* line, vector<float> *vertices)
-{
-	char* strtok_state{};
-	int strmax = 0;
-	char* vertice = strtok_s(line, " ", &strtok_state);
-	int i = 0;
+	vec3 cameraPos = vec3(0.0f, 0.0f, 2.0f);
+	vec3 lightPos = vec3(3.0f, 2.5f, 4.0f);
 
-	vertice = strtok_s(NULL, " ", &strtok_state);
-	(*vertices).push_back(stof(vertice));
-	vertice = strtok_s(NULL, " ", &strtok_state);
-	(*vertices).push_back(stof(vertice));
-	vertice = strtok_s(NULL, " ", &strtok_state);
-	(*vertices).push_back(stof(vertice));
-}
+	glEnable(GL_DEPTH_TEST);
 
-/*
-* Parse line with face (sequence of v/vt/vn indices).
-* Converts face into Vertex (v/vt/vn) and indice pointing to Vertex
-*
-* For each Vertex defined in face, check if already mapped,
-* if already mapped, set indice to indice of Vertex
-* else append vertex buffer with new vertex (v/vt/vn) and set indice to vertex
-*/
-static void parse_face(char* line, input_buffers input_buffers, output_buffers output_buffers, unordered_map<string, unsigned int>* vertex_map)
-{
-	char* strtok_state{};
-	char* face_vertex = strtok_s(line, " ", &strtok_state); // v/vt/vn vertex indice set (only parsing vertex indice so far)
-	vector<unsigned int> face;
+	Mesh mesh;
+	mesh = loadObjFromPath("models/Bio-soldier.obj");
 
-	while (face_vertex = strtok_s(NULL, " ", &strtok_state)) //parse vertex indices separated by spaces
+	cout << "Read " << mesh.vertices.size() << " vertices, " << mesh.indices.size() << " indices." << endl;
+
+	Mesh cube;
+	cube = loadObjFromPath("models/Untitled.obj");
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	prev_x = s_width / 2.0f;
+	prev_y = s_height / 2.0f;
+
+	while (!glfwWindowShouldClose(window))
 	{
-		face.push_back(parse_face_vertex(face_vertex, input_buffers, output_buffers, vertex_map));
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+		processInput(window);
+
+		glViewport(0, 0, s_width, s_height);
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		camera.updateCameraVectors();
+
+		shader.use();
+		mat4 view = camera.GetViewMatrix();
+		shader.setMat4("view", view);
+	    mat4 projection = perspective(radians(75.0f), (float)s_width / (float)s_height, 0.1f, 100.0f);
+		shader.setMat4("projection", projection);
+
+		//lighting uniforms
+		shader.setVec3("lightPos", lightPos);
+		shader.setVec3("ambient", vec3(0.6f, 0.6f, 0.2f));
+
+		//draw model
+		mat4 model = mat4(1.0f);
+		model = translate(model, vec3(0.0f, 2.0f, -3.0f));
+		model = scale(model, vec3(0.1f));
+		shader.setMat4("model", model);
+		shader.setMat4("view", view);
+		shader.setMat4("projection", projection);
+		drawMesh(mesh);
+		int i = glGetError();
+
+		//draw other thingy
+		model = mat4(1.0f);
+		model = translate(model, vec3(5.0f, 2.0f, -3.0f));
+		shader.setMat4("model", model);
+		drawMesh(cube);
+
+		//light;
+		shader.use();
+		model = mat4(1.0f);
+		model = translate(model, lightPos);
+		shader.setMat4("model", model);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
+		
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
-	//fan triangulate vertex indices so that any polygon becomes tri
-	vector<unsigned int> indices = fan_triangulate(&face);
-	(*output_buffers.indices).insert((*output_buffers.indices).end(), indices.begin(), indices.end());
+	glfwTerminate();
+	return 0;
 }
 
-/*
-* Parse string of vertex indices  
-*
-*/
-static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers input_buffers, output_buffers output_buffers, unordered_map<string, unsigned int> *vertex_map)
+
+void processInput(GLFWwindow* window)
 {
-	string face_vertex_copy = face_vertex;
-	const auto i = vertex_map->find(face_vertex);
-	if (i == vertex_map->end())
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
-		//vertex indices not yet parsed
-		unsigned int cur_index = (*output_buffers.vertices).size();//index of current vertex
-
-		vertex_map->insert({ face_vertex_copy, cur_index }); //create new entry pointing to current index in vertex buffer
-
-		//parse indices from line
-		unsigned int v = 0;
-		unsigned int vt = INT_MAX;
-		unsigned int vn = INT_MAX;
-
-		char* strtok_state{};
-		char* indice_str{};
-
-		if (indice_str = strtok_s(face_vertex, "/", &strtok_state))
-		{
-			v = stoi(indice_str) - 1; //make index start at 0
-		}
-		if (indice_str = strtok_s(NULL, "/", &strtok_state))
-		{
-			vt = stoi(indice_str) - 1;
-		}
-		if (indice_str = strtok_s(NULL, "/", &strtok_state))
-		{
-			vn = stoi(indice_str) - 1;
-		}
-		//create vertex using indicesCylinder
-		Vertex vertex;
-		//pos
-		vertex.x = input_buffers.vertices.at(v * 3);
-		vertex.y = input_buffers.vertices.at((v * 3) + 1);
-		vertex.z = input_buffers.vertices.at((v * 3) + 2);
-		//texcoord
-		if (vt != INT_MAX)
-		{ 
-			vertex.tx = input_buffers.tex_coords.at(vt * 2);
-			vertex.ty = input_buffers.tex_coords.at((vt * 2) + 1);
-		}
-		//normal
-		if (vn != INT_MAX)
-		{
-			vertex.nx = input_buffers.normals.at(vn * 3);
-			vertex.ny = input_buffers.normals.at((vn * 3) + 1);
-			vertex.nz = input_buffers.normals.at((vn * 3) + 2);
-		}
-		//push vertex to final buffer
-		(*output_buffers.vertices).push_back(vertex);
-		return cur_index;
+		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
-	else
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		unsigned int indice = vertex_map->at(face_vertex);
-		return(indice);
+		camera.position -= camera.right *= cameraSpeed * deltaTime;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		camera.position += camera.right *= cameraSpeed * deltaTime;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		camera.position -= camera.front *= cameraSpeed * deltaTime;
+	}
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		camera.position += camera.front *= cameraSpeed * deltaTime;
+	}
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	{
+		camera.position += normalize(camera.worldUp) *= cameraSpeed * deltaTime;
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	{
+		camera.position -= normalize(camera.worldUp) *= cameraSpeed * deltaTime;
 	}
 }
 
-/*
-* Use fan triangulation to split polygon indices into triangles
-*/
-static vector<unsigned int> fan_triangulate(vector<unsigned int>* face)
+static void windowSizeCallback(GLFWwindow* window, int width, int height)
 {
-	//use fan triangulation to split face into tris
-	//0 1 2 3 ... into 0 1 2, 0 2 3, 0 3 4 ...
-	int len = face->size();
-	int i = 0;
-	vector<unsigned int> indices;
+	glfwSetWindowSize(window, width, height);
+	s_width = width;
+	s_height = height;
+}
 
-	while (i+2 < len)
-	{
-		(indices).push_back(face->at(0));
-		(indices).push_back(face->at(i + 1));
-		(indices).push_back(face->at(i + 2));
-		++i;
-	}
-	return indices;
+static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+{
+	double cur_x = xpos;
+	double cur_y = ypos;
+	double xoffset = (xpos - prev_x) * cameraSensitivity * deltaTime;
+	double yoffset = (prev_y - ypos) * cameraSensitivity * deltaTime;
+	prev_x = cur_x;
+	prev_y = cur_y;
+
+	camera.yaw += xoffset;
+	camera.pitch += yoffset;
 }

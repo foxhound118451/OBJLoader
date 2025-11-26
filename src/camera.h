@@ -46,7 +46,6 @@ public:
 		right = normalize(cross(front, worldUp));
 		up = normalize(cross(right, front));
 	}
-
 private:
 
 	/*Returns matrix which transforms vector to inverse of camera position and rotation*/
