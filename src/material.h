@@ -2,6 +2,13 @@
 #define MATERIAL_H
 #include <vector>
 
+struct Color
+{
+	float r;
+	float g;
+	float b;
+};
+
 /*
 * .mtl Material information
 */
@@ -19,13 +26,6 @@ struct Material
 	char* diffuse_map; //'map_Kd' diffuse map path
 	char* specular_map; //'map_Ks' specular map path
 	unsigned char illumination; //'illum'/'illum_#' illumination model
-};
-
-struct Color
-{
-	float r;
-	float g;
-	float b;
 };
 
 /*

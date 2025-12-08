@@ -74,4 +74,4 @@ private:
 		return rotation * translation;
 	}
 };
-#endif CAMERA_H
+#endif

@@ -2,7 +2,7 @@
 * Temporary file used for debugging model loader.
 */
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -50,14 +50,13 @@ int main()
 	}
 	glfwMakeContextCurrent(window);
 
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        if (!gladLoadGL(glfwGetProcAddress))
 	{
 		cout << "Failed to initialize GLAD" << endl;
 		return -1;
 	}
 
 	//set callbacks
-	glfwSetWindowSizeCallback(window, windowSizeCallback);
 	glfwSetCursorPosCallback(window, cursorPosCallback);
 	
 	glViewport(0, 0, s_width, s_height);
@@ -72,7 +71,7 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 
 	Mesh mesh;
-	mesh = loadObjFromPath("models/Bio-soldier.obj");
+	mesh = loadObjFromPath("models/t_34_obj.obj");
 
 	cout << "Read " << mesh.vertices.size() << " vertices, " << mesh.indices.size() << " indices." << endl;
 
