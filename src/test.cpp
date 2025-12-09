@@ -19,7 +19,7 @@ using namespace std;
 void processInput(GLFWwindow* window);
 static void windowSizeCallback(GLFWwindow* window, int width, int height);
 static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
-float cameraSensitivity = 500.0f;
+float cameraSensitivity = 150.0f;
 float cameraSpeed = 10.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -58,6 +58,7 @@ int main()
 
 	//set callbacks
 	glfwSetCursorPosCallback(window, cursorPosCallback);
+        glfwSetWindowSizeCallback(window, windowSizeCallback);
 	
 	glViewport(0, 0, s_width, s_height);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -65,8 +66,10 @@ int main()
 	Shader shader = Shader("src/cube.vert", "src/cube.frag");
 	shader.use();
 
+        Shader light = Shader("src/cube.vert", "src/light.frag");
+
 	vec3 cameraPos = vec3(0.0f, 0.0f, 2.0f);
-	vec3 lightPos = vec3(3.0f, 2.5f, 4.0f);
+	vec3 lightPos = vec3(1.0f, 1.5f, 2.0f);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -76,7 +79,7 @@ int main()
 	cout << "Read " << mesh.vertices.size() << " vertices, " << mesh.indices.size() << " indices." << endl;
 
 	Mesh cube;
-	cube = loadObjFromPath("models/Untitled.obj");
+	cube = loadObjFromPath("models/Cylinder.obj");
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	prev_x = s_width / 2.0f;
@@ -90,7 +93,7 @@ int main()
 		processInput(window);
 
 		glViewport(0, 0, s_width, s_height);
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.35f, 0.73f, 0.83f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		camera.updateCameraVectors();
@@ -122,10 +125,16 @@ int main()
 		drawMesh(cube);
 
 		//light;
-		shader.use();
+		light.use();
+		view = camera.GetViewMatrix();
+		light.setMat4("view", view);
+                projection = perspective(radians(75.0f), (float)s_width / (float)s_height, 0.1f, 100.0f);
+		light.setMat4("projection", projection);
 		model = mat4(1.0f);
+                lightPos = vec3(1.0f, 3.0f, 1.0f);
 		model = translate(model, lightPos);
-		shader.setMat4("model", model);
+		light.setMat4("model", model);
+		drawMesh(cube);
 		//glDrawArrays(GL_TRIANGLES, 0, 36);
 		
 		glfwSwapBuffers(window);

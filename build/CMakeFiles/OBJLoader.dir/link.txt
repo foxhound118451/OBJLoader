@@ -1,1 +1,0 @@
-/usr/bin/c++ -g -Wl,--dependency-file=CMakeFiles/OBJLoader.dir/link.d CMakeFiles/OBJLoader.dir/src/gl.c.o CMakeFiles/OBJLoader.dir/src/test.cpp.o CMakeFiles/OBJLoader.dir/src/material.cpp.o CMakeFiles/OBJLoader.dir/src/model.cpp.o -o OBJLoader  -lglfw -lglm

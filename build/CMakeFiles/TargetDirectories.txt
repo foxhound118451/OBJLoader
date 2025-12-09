@@ -1,3 +1,0 @@
-/home/lady/Projects/OBJLoader/build/CMakeFiles/OBJLoader.dir
-/home/lady/Projects/OBJLoader/build/CMakeFiles/edit_cache.dir
-/home/lady/Projects/OBJLoader/build/CMakeFiles/rebuild_cache.dir
