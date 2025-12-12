@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <GLFW/glfw3.h>
 #include <model.h>
+#include <material.h>
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
@@ -23,6 +24,7 @@ struct output_buffers
 {
     vector<Vertex> *vertices;
     vector<unsigned int> *indices;
+    vector<Material> materials;
 };
 
 //prototypes
@@ -130,7 +132,7 @@ static int parse_obj_file(const char *file_path, output_buffers output_buffers)
 
         switch (*line)
         {
-            case 'v': //parse vertex
+            case 'v': //vertex
             {
                 switch (line[1])
                 {
@@ -148,10 +150,19 @@ static int parse_obj_file(const char *file_path, output_buffers output_buffers)
                 }
                 break;
             }
-            case 'f':
+            case 'f': //face
             {
                 parse_face(line, input_buffers, output_buffers, &vertex_map);
                 break;
+            }
+            case 'm': //material
+            {
+                strtok(line, " ");
+                char mtl_path[128];
+                strcpy (mtl_path, "models/"); //assume all models under models directory
+                strcat (mtl_path, strtok(NULL, " "));
+                parse_mtl(mtl_path);
+
             }
         }
     }

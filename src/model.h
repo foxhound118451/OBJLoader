@@ -2,6 +2,9 @@
 
 #include <vector>
 #include <math.h>
+#include <model.h>
+#include <material.h>
+#include <string>
 
 //structs
 
@@ -24,9 +27,12 @@ struct Vertex
 
 struct Mesh
 {
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-	unsigned int VAO = -1;
+    std::string name;
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    Material material;
+    float smoothing = 0;
+    unsigned int VAO = -1;
 };
 
 
