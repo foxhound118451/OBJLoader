@@ -1,6 +1,6 @@
 #ifndef SHADER_H
 #define SHADER_H
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
@@ -24,8 +24,8 @@ public:
 		ifstream vFile;
 		ifstream fFile;
 
-		vFile.exceptions(ifstream::failbit | ifstream::badbit);
-		fFile.exceptions(ifstream::failbit | ifstream::badbit);
+		vFile.exceptions(ifstream::badbit);
+		fFile.exceptions(ifstream::badbit);
 		try
 		{
 			vFile.open(vertPath);

@@ -1,10 +1,13 @@
 # **OBJ Loader**
 
-Reads Wavefront .obj files, and returns data in a format 
+Reads Wavefront .obj files, returns data as a Mesh struct,
 usable for OpenGL rendering.
 
-Slow and not completely functional yet. Currently can only parse one 
-object group, and does not yet support materials.
+Currently, it only supports a small subset of the .obj spec.<br/>
+
+For now, it parses vertices, normals, and faces. Faces are converted into tris, 
+resulting the vertexes/indices are stored in one Mesh. Larger files will cause 
+it to hang.
 
 ## Functions
 
@@ -18,5 +21,7 @@ returns Mesh struct containing VAO, vertex/indice buffers.
 Uses mesh buffers from loadObjFromPath to draw. Does not set up shader.
 
 ## Compilation
+Install dependencies, build using CMake.
 
-Link GLFW 3.4, GLAD (Core 3.3), and GLM to solution, build using Visual Studio.
+#Dependencies
+Link GLFW 3.4, GLAD (Core 3.3), GLM.

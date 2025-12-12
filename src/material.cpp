@@ -1,4 +1,5 @@
 #include <material.h>
+#include <string.h>
 #include <iostream>
 #include <fstream>
 
@@ -26,7 +27,7 @@ vector<Material> parse_mtl(const char* path)
 
 		char* strtok_state{};
 
-		char* line_type = strtok_s(line, " ", &strtok_state);
+		char* line_type = strtok_r(line, " ", &strtok_state);
 		if (strcmp(line_type, "newmtl"))
 		{
 			//parse material
