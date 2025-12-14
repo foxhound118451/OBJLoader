@@ -123,14 +123,22 @@ static int parse_obj_file(const char *file_path, output_buffers output_buffers)
     */
     while (!(file.eof()  || file.fail())) //parse line by line
     {
-        char line[256]; 
-        file.getline(line, 256);
+        std::string line_str;
+        getline(file, line_str);
+
+        size_t len = line_str.size();
+        char line[len + 1];
+        strcpy (line, line_str.c_str());
+        if (line[len-1] == '\r') //remove carriage ret
+        {
+            line[len-1] = '\0';
+        }
 
         //read all vertices, texture coordinates, normals into corresponding buffers,
         //read faces into buffer
         //parse face buffer, new vertex array with corresponding texture coordinates/normals
 
-        switch (*line)
+        switch (line[0])
         {
             case 'v': //vertex
             {
@@ -155,7 +163,7 @@ static int parse_obj_file(const char *file_path, output_buffers output_buffers)
                 parse_face(line, input_buffers, output_buffers, &vertex_map);
                 break;
             }
-            case 'm': //material
+            case 'm': //material declaration
             {
                 strtok(line, " ");
                 char mtl_path[128];
@@ -220,7 +228,7 @@ static void parse_face(char* line, input_buffers input_buffers, output_buffers o
     char* face_vertex = strtok_r(line, " ", &strtok_state); // v/vt/vn vertex indice set (only parsing vertex indice so far)
     vector<unsigned int> face;
 
-    while (face_vertex = strtok_r(NULL, " ", &strtok_state)) //parse vertex indices separated by spaces
+    while ((face_vertex = strtok_r(NULL, " ", &strtok_state))) //parse vertex indices separated by spaces
     {
             face.push_back(parse_face_vertex(face_vertex, input_buffers, output_buffers, vertex_map));
     }
