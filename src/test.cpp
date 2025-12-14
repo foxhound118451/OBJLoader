@@ -115,6 +115,8 @@ int main()
 		shader.setMat4("model", model);
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
+                Color object_color = mesh.materials.at(0).ambient;
+                shader.setVec3("objectColor", object_color.r, object_color.g, object_color.b);
 		drawMesh(mesh);
 		int i = glGetError();
 
@@ -122,6 +124,7 @@ int main()
 		model = mat4(1.0f);
 		model = translate(model, vec3(5.0f, 2.0f, -3.0f));
 		shader.setMat4("model", model);
+                shader.setVec3("objectColor", 0.5, 0.5, 0.9);
 		drawMesh(cube);
 
 		//light;

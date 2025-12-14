@@ -4,9 +4,9 @@
 
 struct Color
 {
-	float r;
-	float g;
-	float b;
+	float r = 0.0f;
+	float g = 0.0f;
+	float b = 0.0f;
 };
 
 /*
@@ -14,7 +14,7 @@ struct Color
 */
 struct Material
 {
-	char* name; //'newmtl'
+	char name[64]{}; //'newmtl'
 	Color ambient; //'Ka' ambient 
 	Color diffuse; //'Kd' diffuse
 	Color specular; //'Ks' specular
@@ -22,9 +22,9 @@ struct Material
 	float specular_pow; //'Ns' specular exponent 
 	float optical_density; //'Ni' index of refraction
 	float dissolve; //'d' opacity
-	char* ambient_map; //'map_Ka' ambient map path
-	char* diffuse_map; //'map_Kd' diffuse map path
-	char* specular_map; //'map_Ks' specular map path
+	char ambient_map[256]{}; //'map_Ka' ambient map path
+	char diffuse_map[256]{}; //'map_Kd' diffuse map path
+	char specular_map[256]{}; //'map_Ks' specular map path
 	unsigned char illumination; //'illum'/'illum_#' illumination model
 };
 

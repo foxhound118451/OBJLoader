@@ -98,6 +98,11 @@ public:
 	{
 		glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, &vec[0]);
 	}
+        void setVec3(const string& name, float x, float y, float z)
+        {
+                glm::vec3 vec(x,y,z);
+                glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, &vec[0]);
+        }
 	void use()
 	{
 		glUseProgram(ID);

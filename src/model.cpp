@@ -24,7 +24,7 @@ struct output_buffers
 {
     vector<Vertex> *vertices;
     vector<unsigned int> *indices;
-    vector<Material> materials;
+    vector<Material> *materials;
 };
 
 //prototypes
@@ -56,7 +56,8 @@ Mesh loadObjFromPath(const char* path)
 
     vector<Vertex> vertices;
     vector<unsigned int> indices;
-    output_buffers output_buffers = {&vertices, &indices};
+    vector<Material> materials; 
+    output_buffers output_buffers = {&vertices, &indices, &materials};
 
     //if (!parse_obj_file(path, output_buffers))
     parse_obj_file(path, output_buffers);
@@ -65,6 +66,7 @@ Mesh loadObjFromPath(const char* path)
 
         mesh.vertices = *output_buffers.vertices;
         mesh.indices = *output_buffers.indices;
+        mesh.materials = *output_buffers.materials;
         unsigned int VBO;
         unsigned int EBO;
 
@@ -169,8 +171,8 @@ static int parse_obj_file(const char *file_path, output_buffers output_buffers)
                 char mtl_path[128];
                 strcpy (mtl_path, "models/"); //assume all models under models directory
                 strcat (mtl_path, strtok(NULL, " "));
-                parse_mtl(mtl_path);
-
+                vector<Material> materials = parse_mtl(mtl_path);
+                output_buffers.materials->insert(output_buffers.materials->end(), std::begin(materials), std::end(materials));
             }
         }
     }

@@ -30,7 +30,7 @@ struct Mesh
     std::string name;
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-    Material material;
+    std::vector<Material> materials;
     float smoothing = 0;
     unsigned int VAO = -1;
 };
