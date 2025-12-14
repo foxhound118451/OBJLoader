@@ -1,7 +1,7 @@
 #include <glad/gl.h>
 #include <limits.h>
 #include <GLFW/glfw3.h>
-#include <model.h>
+#include <model_data.h>
 #include <material.h>
 #include <iostream>
 #include <fstream>
@@ -39,20 +39,13 @@ static vector<unsigned int> fan_triangulate(vector<unsigned int>* face);
 static bool has_tex_coords = false;
 static bool has_normals = false;
 
-void drawMesh(Mesh mesh)
-{
-    glBindVertexArray(mesh.VAO);
-    glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
-}
-
-
 /*
-	Parse Wavefront .obj file into Mesh struct, set VAO of Mesh -1 on failure.
+	Parse Wavefront .obj file into ModelData struct
 	Path is relative to resources/models
 */
-Mesh loadObjFromPath(const char* path)
+ModelData load_obj(const char* path)
 {
-    Mesh mesh;
+    MeshData mesh;
 
     vector<Vertex> vertices;
     vector<unsigned int> indices;
@@ -67,30 +60,10 @@ Mesh loadObjFromPath(const char* path)
         mesh.vertices = *output_buffers.vertices;
         mesh.indices = *output_buffers.indices;
         mesh.materials = *output_buffers.materials;
-        unsigned int VBO;
-        unsigned int EBO;
+        ModelData model;
+        model.meshes.push_back(mesh);
+        return model;
 
-        glGenVertexArrays(1, &mesh.VAO);
-        glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);		
-        
-        glBindVertexArray(mesh.VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
-        glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), mesh.vertices.data(), GL_STATIC_DRAW);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), mesh.indices.data(), GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)0); //position
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)(offsetof(Vertex, tx))); //texcoord
-        
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)(offsetof(Vertex, nx))); //normal
-
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-
-        return mesh;
     //}
     //else
     //{

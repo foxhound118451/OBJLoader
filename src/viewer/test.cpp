@@ -12,9 +12,9 @@ using namespace std;
 #include <string>
 #include <iostream>
 
-#include <shader.h>
-#include <camera.h>
-#include <model.h>
+#include "shader.h"
+#include "camera.h"
+#include "model.h"
 
 void processInput(GLFWwindow* window);
 static void windowSizeCallback(GLFWwindow* window, int width, int height);
@@ -63,23 +63,23 @@ int main()
 	glViewport(0, 0, s_width, s_height);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	Shader shader = Shader("src/cube.vert", "src/cube.frag");
+	Shader shader = Shader("src/viewer/cube.vert", "src/viewer/cube.frag");
 	shader.use();
 
-        Shader light = Shader("src/cube.vert", "src/light.frag");
+        Shader light = Shader("src/viewer/cube.vert", "src/viewer/light.frag");
 
 	vec3 cameraPos = vec3(0.0f, 0.0f, 2.0f);
 	vec3 lightPos = vec3(1.0f, 1.5f, 2.0f);
 
 	glEnable(GL_DEPTH_TEST);
 
-	Mesh mesh;
-	mesh = loadObjFromPath("models/t_34_obj.obj");
+	Model obj;
+	obj = load_model(load_obj("models/t34/t_34_obj.obj"));
 
-	cout << "Read " << mesh.vertices.size() << " vertices, " << mesh.indices.size() << " indices." << endl;
+	cout << "Read " << obj.vertices << " vertices, " << obj.indices << " indices." << endl;
 
-	Mesh cube;
-	cube = loadObjFromPath("models/Cylinder.obj");
+	Model cube;
+	cube = load_model(load_obj("models/Cylinder.obj"));
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	prev_x = s_width / 2.0f;
@@ -115,17 +115,15 @@ int main()
 		shader.setMat4("model", model);
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
-                Color object_color = mesh.materials.at(0).ambient;
-                shader.setVec3("objectColor", object_color.r, object_color.g, object_color.b);
-		drawMesh(mesh);
+                shader.setVec3("objectColor", 0.5, 0.5, 0.9);
+		draw_model(obj);
 		int i = glGetError();
 
 		//draw other thingy
 		model = mat4(1.0f);
 		model = translate(model, vec3(5.0f, 2.0f, -3.0f));
 		shader.setMat4("model", model);
-                shader.setVec3("objectColor", 0.5, 0.5, 0.9);
-		drawMesh(cube);
+		draw_model(cube);
 
 		//light;
 		light.use();
@@ -137,7 +135,7 @@ int main()
                 lightPos = vec3(1.0f, 3.0f, 1.0f);
 		model = translate(model, lightPos);
 		light.setMat4("model", model);
-		drawMesh(cube);
+		draw_model(cube);
 		//glDrawArrays(GL_TRIANGLES, 0, 36);
 		
 		glfwSwapBuffers(window);

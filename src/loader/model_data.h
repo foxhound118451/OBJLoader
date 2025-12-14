@@ -1,8 +1,8 @@
 #pragma once
+#define MODEL_DATA_H
 
 #include <vector>
 #include <math.h>
-#include <model.h>
 #include <material.h>
 #include <string>
 
@@ -25,17 +25,21 @@ struct Vertex
 	float nz = NAN;
 };
 
-struct Mesh
+struct MeshData
 {
     std::string name;
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Material> materials;
     float smoothing = 0;
-    unsigned int VAO = -1;
+};
+
+struct ModelData
+{
+    std::string name;
+    std::vector<MeshData> meshes;
 };
 
 
 //prototypes;
-void drawMesh(Mesh mesh);
-Mesh loadObjFromPath(const char* path);
+ModelData load_obj(const char* path);
