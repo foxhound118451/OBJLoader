@@ -11,14 +11,13 @@ using namespace glm;
 using namespace std;
 #include <string>
 #include <iostream>
+#include <filesystem>
 
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
 
-void processInput(GLFWwindow* window);
-static void windowSizeCallback(GLFWwindow* window, int width, int height);
-static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+GLFWwindow* window = NULL;
 float cameraSensitivity = 150.0f;
 float cameraSpeed = 10.0f;
 float deltaTime = 0.0f;
@@ -27,6 +26,11 @@ double prev_x = 0.0;
 double prev_y = 0.0;
 int s_width = 1280;
 int s_height = 720;
+
+//prototypes
+void processInput(GLFWwindow* window);
+static void windowSizeCallback(GLFWwindow* window, int width, int height);
+static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 
 Camera camera(vec3(0.0, 2.0f, 3.0f), vec3(0.0, 1.0f, 0.0f));
 int main()
@@ -40,7 +44,7 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	GLFWwindow* window = glfwCreateWindow(s_width, s_height, "OpenGL", NULL, NULL);
+	window = glfwCreateWindow(s_width, s_height, "OpenGL", NULL, NULL);
 
 	if (!window)
 	{
@@ -63,10 +67,12 @@ int main()
 	glViewport(0, 0, s_width, s_height);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	Shader shader = Shader("src/cube.vert", "src/cube.frag");
+        cout << "Path: " << filesystem::current_path() << endl;
+
+	Shader shader = Shader("shaders/cube.vert", "shaders/cube.frag");
 	shader.use();
 
-        Shader light = Shader("src/cube.vert", "src/light.frag");
+        Shader light = Shader("shaders/cube.vert", "shaders/light.frag");
 
 	vec3 cameraPos = vec3(0.0f, 0.0f, 2.0f);
 	vec3 lightPos = vec3(1.0f, 1.5f, 2.0f);
@@ -74,12 +80,12 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 
 	Model obj;
-	obj = load_model(load_obj("viewer/models/t34/t_34_obj.obj"));
+	obj = load_model(load_obj("models/t_34_obj.obj"));
 
 	cout << "Read " << obj.vertices << " vertices, " << obj.indices << " indices." << endl;
 
 	Model cube;
-	cube = load_model(load_obj("viewer/models/Cylinder.obj"));
+	cube = load_model(load_obj("models/cube.obj"));
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	prev_x = s_width / 2.0f;
@@ -101,7 +107,7 @@ int main()
 		shader.use();
 		mat4 view = camera.GetViewMatrix();
 		shader.setMat4("view", view);
-	    mat4 projection = perspective(radians(75.0f), (float)s_width / (float)s_height, 0.1f, 100.0f);
+                mat4 projection = perspective(radians(75.0f), (float)s_width / (float)s_height, 0.1f, 100.0f);
 		shader.setMat4("projection", projection);
 
 		//lighting uniforms

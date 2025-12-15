@@ -162,4 +162,3 @@ static Color parse_color(char* line)
     }
     return color;
 }
-

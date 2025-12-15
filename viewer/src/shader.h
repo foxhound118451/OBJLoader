@@ -40,7 +40,7 @@ public:
 		}
 		catch (ifstream::failure e)
 		{
-			std::cout << "ERROR SHADER FILE NOT SUCCESSFULLY READ, REASON: " << e.what() << endl;
+			std::cout << "ERROR SHADER FILE AT PATH: '" << vertPath << "'NOT SUCCESSFULLY READ, REASON: " << e.what() << endl;
 		}
 		const char* vShaderCode = vertexCode.c_str();
 		const char* fShaderCode = fragmentCode.c_str();
@@ -56,7 +56,7 @@ public:
 		if (!success)
 		{
 			glGetShaderInfoLog(vertex, 512, NULL, info);
-			std::cout << "ERROR: VERTEX SHADER COMPILATION FAILED\n" << info << endl;
+			std::cout << "ERROR: VERTEX SHADER COMPILATION FAILED, PATH: '" << vertPath << "'.\n" << info << endl;
 		}
 
 		//compile fragment shader
@@ -67,7 +67,7 @@ public:
 		if (!success)
 		{
 			glGetShaderInfoLog(fragment, 512, NULL, info);
-			std::cout << "ERROR: FRAGMENT SHADER COMPILATION FAILED\n" << info << endl;
+			std::cout << "ERROR: FRAGMENT SHADER COMPILATION FAILED, PATH: '" << fragPath << "'\n" << info << endl;
 		}
 
 		//link shader program
