@@ -3,6 +3,7 @@ target_sources (OBJViewer
    PRIVATE
       src/gl.c
       src/model.cpp
+      src/stb_image.cpp
       src/viewer.cpp
 )
 target_include_directories(OBJViewer

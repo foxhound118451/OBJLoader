@@ -30,7 +30,7 @@ struct MeshData
     std::string name;
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-    std::vector<Material> materials;
+    std::string material[256]; //material name
     float smoothing = 0;
 };
 
@@ -38,6 +38,7 @@ struct ModelData
 {
     std::string name;
     std::vector<MeshData> meshes;
+    std::unordered_map<std::string, Material> materials;
 };
 
 

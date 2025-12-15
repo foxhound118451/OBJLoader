@@ -24,7 +24,7 @@ struct output_buffers
 {
     vector<Vertex> *vertices;
     vector<unsigned int> *indices;
-    vector<Material> *materials;
+    unordered_map<string, Material> *materials;
 };
 
 //prototypes
@@ -48,7 +48,7 @@ ModelData load_obj(const char* path)
 
     vector<Vertex> vertices;
     vector<unsigned int> indices;
-    vector<Material> materials; 
+    unordered_map<Material> materials; 
     output_buffers output_buffers = {&vertices, &indices, &materials};
 
     //if (!parse_obj_file(path, output_buffers))
@@ -58,8 +58,8 @@ ModelData load_obj(const char* path)
 
         mesh.vertices = *output_buffers.vertices;
         mesh.indices = *output_buffers.indices;
-        mesh.materials = *output_buffers.materials;
         ModelData model;
+        model.materials = *output_buffers.materials;
         model.meshes.push_back(mesh);
         return model;
 

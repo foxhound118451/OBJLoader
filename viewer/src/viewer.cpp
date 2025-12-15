@@ -16,6 +16,7 @@ using namespace std;
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
+#include "texture.h"
 
 GLFWwindow* window = NULL;
 float cameraSensitivity = 150.0f;
@@ -133,6 +134,7 @@ int main()
 		model = translate(model, vec3(5.0f, 2.0f, -3.0f));
                 model = rotate(model, radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
 		shader.setMat4("model", model);
+
 		draw_model(obj2);
 
 		//light;
