@@ -16,3 +16,13 @@ target_link_libraries(OBJViewer
       glm
       objloader
 )
+add_custom_command(
+    TARGET OBJViewer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/shaders
+            ${CMAKE_CURRENT_BINARY_DIR}/shaders)
+add_custom_command(
+    TARGET OBJViewer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/models
+            ${CMAKE_CURRENT_BINARY_DIR}/models)

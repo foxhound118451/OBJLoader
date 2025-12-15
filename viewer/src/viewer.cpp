@@ -26,6 +26,7 @@ double prev_x = 0.0;
 double prev_y = 0.0;
 int s_width = 1280;
 int s_height = 720;
+float angle = 0.0f;
 
 //prototypes
 void processInput(GLFWwindow* window);
@@ -80,12 +81,13 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 
 	Model obj;
-	obj = load_model(load_obj("models/t_34_obj.obj"));
+	obj = load_model(load_obj("models/t_34/t_34_obj.obj"));
 
 	cout << "Read " << obj.vertices << " vertices, " << obj.indices << " indices." << endl;
 
-	Model cube;
-	cube = load_model(load_obj("models/cube.obj"));
+	Model obj2 = load_model(load_obj("models/zis-42/ZIS_42.obj"));
+
+        Model prism = load_model(load_obj("models/prism.obj"));
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	prev_x = s_width / 2.0f;
@@ -127,9 +129,11 @@ int main()
 
 		//draw other thingy
 		model = mat4(1.0f);
+                model = scale(model, vec3(0.01f));
 		model = translate(model, vec3(5.0f, 2.0f, -3.0f));
+                model = rotate(model, radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
 		shader.setMat4("model", model);
-		draw_model(cube);
+		draw_model(obj2);
 
 		//light;
 		light.use();
@@ -141,7 +145,7 @@ int main()
                 lightPos = vec3(1.0f, 3.0f, 1.0f);
 		model = translate(model, lightPos);
 		light.setMat4("model", model);
-		draw_model(cube);
+		draw_model(prism);
 		//glDrawArrays(GL_TRIANGLES, 0, 36);
 		
 		glfwSwapBuffers(window);
@@ -183,6 +187,14 @@ void processInput(GLFWwindow* window)
 	{
 		camera.position -= normalize(camera.worldUp) *= cameraSpeed * deltaTime;
 	}
+        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        {
+            angle -= 10.0f * deltaTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+        {
+            angle += 10.0f * deltaTime;
+        }
 }
 
 static void windowSizeCallback(GLFWwindow* window, int width, int height)

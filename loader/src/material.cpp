@@ -9,6 +9,7 @@ using namespace std;
 int parse_material(Material* material);
 static Color parse_color(char* line);
 static inline char* fix_newline(std::string line);
+static void parse_map(Material *material, char* line);
 
 ifstream *file;
 
@@ -43,22 +44,22 @@ vector<Material> parse_mtl(const char* path)
             if (!strcmp(linetype, "newmtl")) //material declaration
             {
                 //parse material
-                Material *material = new Material;
+                Material* material = new Material;
 
                 char *name = strtok_r(NULL, " ", &strtok_state);
                 strcpy(material->name, name);
                 if(parse_material(material)) //parse body of material statement
                 {
                     materials.push_back(*material);
-                    delete(material);
+                    delete material;
                 }
                 if(!parse_material(material)) //parse body of material statement
                 {
                     cerr << "ERROR: Failed parsing material with name: \"" << material->name << "\"" << endl;
                     //free material
-                    delete(material);
                     file->close();
                     delete file;
+                    delete material;
                     return materials;
                 }
             }
@@ -99,10 +100,16 @@ int parse_material(Material* material)
             line[len - 1] = '\0';
         }
 
-        switch (line[1])
+        int i = 0;
+        if (line[0] == '\t') //skip tabs
+        {
+            i = 1;
+        }
+
+        switch (line[i])
         {
             case 'K': //color arg
-                switch (line[2])
+                switch (line[i+1])
                 {
                     case 'a': //ambient
                         material->ambient = parse_color(line); 
@@ -116,14 +123,16 @@ int parse_material(Material* material)
                 }
                 break;
             case 'N': 
-            {
-                switch (line[2])
+                switch (line[i+1])
                 {
                     case 's': //specular exponent
                         material->specular_pow = stof(line+3);
                         break;
                 }
-            }
+                break;
+            case 'm': //texture map statement 'map_xx'
+                parse_map(material, line);
+                break;
         }
     }
     while (!(file->eof() || file->bad() || *line == 'n'));
@@ -161,4 +170,36 @@ static Color parse_color(char* line)
         color.g = color.r;
     }
     return color;
+}
+
+/*
+ * Assign texture map path to appropriate place in Material struct.
+*/
+static void parse_map(Material *material, char* line)
+{
+    char* strtok_state{};
+    strtok_r(line, "map_", &strtok_state);
+    char* type = strtok_r(NULL, "map_", &strtok_state);
+    char* path = NULL;
+
+    switch(type[0])
+    {
+        case 'K':
+            switch(type[1])
+            {
+                case 'a':
+                    path = strtok_r(NULL, " ", &strtok_state);
+                    strcpy(material->ambient_map, path);
+                    break;
+                case 'd':
+                    path = strtok_r(NULL, " ", &strtok_state);
+                    strcpy(material->diffuse_map, path);
+                    break;
+                case 's':
+                    path = strtok_r(NULL, " ", &strtok_state);
+                    strcpy(material->specular_map, path);
+                    break;
+            }
+            break;
+    }
 }

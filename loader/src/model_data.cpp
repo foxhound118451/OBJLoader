@@ -35,9 +35,8 @@ static void parse_face(char* line, input_buffers input_buffers, output_buffers o
 static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers input_buffers, output_buffers output_buffers, unordered_map<string, unsigned int>* vertex_map);
 static vector<unsigned int> fan_triangulate(vector<unsigned int>* face);
 
-//global flags
-static bool has_tex_coords = false;
-static bool has_normals = false;
+//global vars
+char* obj_path = NULL;
 
 /*
 	Parse Wavefront .obj file into ModelData struct
@@ -78,6 +77,7 @@ ModelData load_obj(const char* path)
 static int parse_obj_file(const char *file_path, output_buffers output_buffers)
 {		
     ifstream file = ifstream(file_path);
+    obj_path = (char*)file_path;
     if (!file){
         cout << "ERROR: Failed opening .obj file at path: " << file_path << endl;
         return -1;
@@ -120,11 +120,9 @@ static int parse_obj_file(const char *file_path, output_buffers output_buffers)
                 switch (line[1])
                 {
                     case 't': //vertex texture
-                        has_tex_coords = true;
                         parse_texcoord(line, &input_buffers.tex_coords);
                         break;
                     case 'n': //vertex normal
-                        has_normals = true;
                         parse_vertex(line, &input_buffers.normals);
                         break;
                     case ' ': //vertex
@@ -141,8 +139,14 @@ static int parse_obj_file(const char *file_path, output_buffers output_buffers)
             case 'm': //material declaration
             {
                 strtok(line, " ");
+
+                string dir(obj_path);
+                size_t pos = dir.find_last_of("/"); //get directory of model file
+                dir = dir.substr(0, pos);
+
                 char mtl_path[128];
-                strcpy (mtl_path, "models/"); //assume all models under models directory
+                strcat(mtl_path, dir.c_str());
+                strcat(mtl_path, "/");
                 strcat (mtl_path, strtok(NULL, " "));
                 vector<Material> materials = parse_mtl(mtl_path);
                 output_buffers.materials->insert(output_buffers.materials->end(), std::begin(materials), std::end(materials));
