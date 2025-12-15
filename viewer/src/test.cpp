@@ -63,10 +63,10 @@ int main()
 	glViewport(0, 0, s_width, s_height);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	Shader shader = Shader("src/viewer/cube.vert", "src/viewer/cube.frag");
+	Shader shader = Shader("src/cube.vert", "src/cube.frag");
 	shader.use();
 
-        Shader light = Shader("src/viewer/cube.vert", "src/viewer/light.frag");
+        Shader light = Shader("src/cube.vert", "src/light.frag");
 
 	vec3 cameraPos = vec3(0.0f, 0.0f, 2.0f);
 	vec3 lightPos = vec3(1.0f, 1.5f, 2.0f);
@@ -74,12 +74,12 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 
 	Model obj;
-	obj = load_model(load_obj("models/t34/t_34_obj.obj"));
+	obj = load_model(load_obj("viewer/models/t34/t_34_obj.obj"));
 
 	cout << "Read " << obj.vertices << " vertices, " << obj.indices << " indices." << endl;
 
 	Model cube;
-	cube = load_model(load_obj("models/Cylinder.obj"));
+	cube = load_model(load_obj("viewer/models/Cylinder.obj"));
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	prev_x = s_width / 2.0f;

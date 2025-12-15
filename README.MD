@@ -13,4 +13,4 @@ Install & link listed dependencies, build using CMake.
 
 # Dependencies
 Link GLFW 3.4, and GLM.
-GLAD2 is used, but it's included with the source files.
+GLAD2 and STB_IMAGE are used, but are included in source.
