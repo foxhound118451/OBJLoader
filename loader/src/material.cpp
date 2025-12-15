@@ -46,6 +46,14 @@ vector<Material> parse_mtl(const char* path)
                 //parse material
                 Material* material = new Material;
 
+                string dir(path);
+                size_t pos = dir.find_last_of("/"); //get directory of mtl 
+                dir = dir.substr(0, pos);
+                char mtl_path[128]; 
+                strcat(mtl_path, dir.c_str());
+                strcat(mtl_path, "/");
+                strcpy(material->path, mtl_path); //copy material directory into struct
+
                 char *name = strtok_r(NULL, " ", &strtok_state);
                 strcpy(material->name, name);
                 if(parse_material(material)) //parse body of material statement
@@ -178,9 +186,10 @@ static Color parse_color(char* line)
 static void parse_map(Material *material, char* line)
 {
     char* strtok_state{};
-    strtok_r(line, "map_", &strtok_state);
-    char* type = strtok_r(NULL, "map_", &strtok_state);
-    char* path = NULL;
+    //parse type of map and path
+    char type[128];
+    char path[128]; 
+    sscanf (line, "%*[^_]_%s %s", type, path); 
 
     switch(type[0])
     {
@@ -188,15 +197,12 @@ static void parse_map(Material *material, char* line)
             switch(type[1])
             {
                 case 'a':
-                    path = strtok_r(NULL, " ", &strtok_state);
                     strcpy(material->ambient_map, path);
                     break;
                 case 'd':
-                    path = strtok_r(NULL, " ", &strtok_state);
                     strcpy(material->diffuse_map, path);
                     break;
                 case 's':
-                    path = strtok_r(NULL, " ", &strtok_state);
                     strcpy(material->specular_map, path);
                     break;
             }

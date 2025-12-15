@@ -1,6 +1,7 @@
 #pragma once
 #define MATERIAL_H
 #include <vector>
+#include <string>
 
 struct Color
 {
@@ -14,7 +15,8 @@ struct Color
 */
 struct Material
 {
-	char name[64]{}; //'newmtl'
+	char name[64]{}; //taken from 'newmtl' statement 
+        char path[256]; //path of material
 	Color ambient; //'Ka' ambient 
 	Color diffuse; //'Kd' diffuse
 	Color specular; //'Ks' specular
