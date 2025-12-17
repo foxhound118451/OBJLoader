@@ -84,7 +84,7 @@ int main()
 	Model obj;
 	obj = load_model(load_obj("models/t_34/t_34_obj.obj"));
 
-	cout << "Read " << obj.vertices << " vertices, " << obj.indices << " indices." << endl;
+	cout << "Read " << obj.vertice_count << " vertices, " << obj.indice_count << " indices." << endl;
 
 	Model obj2 = load_model(load_obj("models/zis-42/ZIS_42.obj"));
 

@@ -3,20 +3,13 @@
 #include "model_data.h"
 #include <vector>
 
-struct Mesh
-{
-    std::string name;
-    MeshData data;
-    unsigned int VAO = 0;
-};
-
 struct Model 
 {
+    ModelData data;
     std::string name;
-    std::vector<Mesh> meshes; 
-    unsigned int vertices = 0; //store counts
-    unsigned int indices = 0;
-    unsigned int materials = 0;
+    unsigned int vertice_count = 0; //store counts
+    unsigned int indice_count = 0;
+    unsigned int material_count = 0;
 };
 
 /*

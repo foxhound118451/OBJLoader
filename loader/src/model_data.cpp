@@ -20,19 +20,19 @@ struct input_buffers
     vector<unsigned int> indices;
 };
 
-struct output_buffers
+struct output_buffers 
 {
-    vector<Vertex> *vertices;
-    vector<unsigned int> *indices;
-    unordered_map<string, Material> *materials;
-};
+    vector<Vertex> vertices;
+    vector<unsigned int> indices;
+    unordered_map<string, Material> materials;
+}; 
 
 //prototypes
-static int parse_obj_file(const char* file_path, output_buffers output_buffers);
+static int parse_obj_file(const char* file_path, output_buffers* out_buf);
 static void parse_vertex(char* line, vector<float>* vertices);
 static inline void parse_texcoord(char* line, vector<float>* texcoords);
-static void parse_face(char* line, input_buffers input_buffers, output_buffers output_buffers, unordered_map<string, unsigned int> *vertex_map);
-static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers input_buffers, output_buffers output_buffers, unordered_map<string, unsigned int>* vertex_map);
+static void parse_face(char* line, input_buffers input_buffers, output_buffers* out_buf, unordered_map<string, unsigned int> *vertex_map);
+static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& input_buffers, output_buffers* out_buf, unordered_map<string, unsigned int>* vertex_map);
 static vector<unsigned int> fan_triangulate(vector<unsigned int>* face);
 
 //global vars
@@ -44,24 +44,23 @@ char* obj_path = NULL;
 */
 ModelData load_obj(const char* path)
 {
-    MeshData mesh;
 
-    vector<Vertex> vertices;
-    vector<unsigned int> indices;
-    unordered_map<Material> materials; 
-    output_buffers output_buffers = {&vertices, &indices, &materials};
+    output_buffers *out_buf = new output_buffers;
 
     //if (!parse_obj_file(path, output_buffers))
-    parse_obj_file(path, output_buffers);
+    parse_obj_file(path, out_buf);
     //{
         //parse faces, use indices to create final vertex & indice array.
+    MeshData mesh;
 
-        mesh.vertices = *output_buffers.vertices;
-        mesh.indices = *output_buffers.indices;
-        ModelData model;
-        model.materials = *output_buffers.materials;
-        model.meshes.push_back(mesh);
-        return model;
+    mesh.vertices = out_buf->vertices;
+    mesh.indices = out_buf->indices;
+    ModelData model;
+    model.path = path;
+    model.materials = out_buf->materials;
+    model.meshes.push_back(mesh);
+    delete out_buf;
+    return model;
 
     //}
     //else
@@ -74,7 +73,7 @@ ModelData load_obj(const char* path)
 /*
 * Parse .obj file at path and store vertices/tex_coords/normals/faces into given vectors. Return 0 on success, -1 on error.
 */
-static int parse_obj_file(const char *file_path, output_buffers output_buffers)
+static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
 {		
     ifstream file = ifstream(file_path);
     obj_path = (char*)file_path;
@@ -149,7 +148,18 @@ static int parse_obj_file(const char *file_path, output_buffers output_buffers)
                 strcat(mtl_path, "/");
                 strcat (mtl_path, strtok(NULL, " "));
                 vector<Material> materials = parse_mtl(mtl_path);
-                output_buffers.materials->insert(output_buffers.materials->end(), std::begin(materials), std::end(materials));
+
+                int len = materials.size();
+                //map materials to their names so meshes dont store entire material
+                for (int i = 0; i < len; ++i)
+                {
+                    output_buffers->materials.insert({string(materials.at(i).name), materials.at(i)});
+                }
+                break;
+            }
+            case 'u': //material of current obj/group
+            {
+                break;
             }
         }
     }
@@ -201,7 +211,7 @@ inline void parse_vertex(char* line, vector<float> *vertices)
 * if already mapped, set indice to indice of Vertex
 * else append vertex buffer with new vertex (v/vt/vn) and set indice to vertex
 */
-static void parse_face(char* line, input_buffers input_buffers, output_buffers output_buffers, unordered_map<string, unsigned int>* vertex_map)
+static void parse_face(char* line, input_buffers input_buffers, output_buffers* out_buf, unordered_map<string, unsigned int>* vertex_map)
 {
     char* strtok_state{};
     char* face_vertex = strtok_r(line, " ", &strtok_state); // v/vt/vn vertex indice set (only parsing vertex indice so far)
@@ -209,26 +219,26 @@ static void parse_face(char* line, input_buffers input_buffers, output_buffers o
 
     while ((face_vertex = strtok_r(NULL, " ", &strtok_state))) //parse vertex indices separated by spaces
     {
-            face.push_back(parse_face_vertex(face_vertex, input_buffers, output_buffers, vertex_map));
+            face.push_back(parse_face_vertex(face_vertex, input_buffers, out_buf, vertex_map));
     }
 
     //fan triangulate vertex indices so that any polygon becomes tri
     vector<unsigned int> indices = fan_triangulate(&face);
-    (*output_buffers.indices).insert((*output_buffers.indices).end(), indices.begin(), indices.end());
+    out_buf->indices.insert(out_buf->indices.end(), indices.begin(), indices.end());
 }
 
 /*
 * Parse string of vertex indices  
 *
 */
-static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers input_buffers, output_buffers output_buffers, unordered_map<string, unsigned int> *vertex_map)
+static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& input_buffers, output_buffers* out_buf, unordered_map<string, unsigned int> *vertex_map)
 {
     string face_vertex_copy = face_vertex;
     const auto i = vertex_map->find(face_vertex);
     if (i == vertex_map->end())
     {
         //vertex indices not yet parsed
-        unsigned int cur_index = (*output_buffers.vertices).size();//index of current vertex
+        unsigned int cur_index = (out_buf->vertices).size();//index of current vertex
 
         vertex_map->insert({ face_vertex_copy, cur_index }); //create new entry pointing to current index in vertex buffer
 
@@ -272,7 +282,7 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers in
             vertex.nz = input_buffers.normals.at((vn * 3) + 2);
         }
         //push vertex to final buffer
-        (*output_buffers.vertices).push_back(vertex);
+        out_buf->vertices.push_back(vertex);
         return cur_index;
     }
     else

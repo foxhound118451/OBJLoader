@@ -5,6 +5,7 @@
 #include <math.h>
 #include <material.h>
 #include <string>
+#include <unordered_map>
 
 //structs
 
@@ -27,16 +28,17 @@ struct Vertex
 
 struct MeshData
 {
-    std::string name;
+    std::string name; 
+    std::string material; //material path 
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-    std::string material[256]; //material name
     float smoothing = 0;
+    unsigned int VAO = 0;
 };
 
 struct ModelData
 {
-    std::string name;
+    std::string path; //path of model
     std::vector<MeshData> meshes;
     std::unordered_map<std::string, Material> materials;
 };
