@@ -1,12 +1,18 @@
+#include <vector>
 #include "model.h"
 #include "glad/gl.h"
-#include <vector>
+#include "texture.h"
+
 
 /**
- * Load mesh's data into appropriate OpenGL buffers.
+ * Load mesh's data into appropriate OpenGL buffers,
+ * initialize buffer objects & texures, then store IDs in given mesh.
 **/
-inline void load_mesh(MeshData& mesh)
+inline Mesh load_mesh(MeshData data, std::unordered_map<std::string, Material> materials)
 {
+    Mesh mesh;
+    mesh.data = data;
+
     unsigned int VAO = 0;
     unsigned int VBO = 0;
     unsigned int EBO = 0;
@@ -19,25 +25,49 @@ inline void load_mesh(MeshData& mesh)
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
-    glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), mesh.vertices.data(), GL_STATIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), mesh.indices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, data.vertices.size() * sizeof(Vertex), data.vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indices.size() * sizeof(unsigned int), data.indices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)0); //position
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)(offsetof(Vertex, tx))); //texcoord
-    
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)(offsetof(Vertex, nx))); //normal
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
+    //assign VAO ID
     mesh.VAO = VAO;
+    
+    //retrieve materials and parse texture paths 
+    if (auto search = materials.find(data.material); search != materials.end())
+    {
+        Material mat = (*search).second;
+        if(*mat.ambient_map)
+        {
+            mesh.ambient_map = load_texture(mat.ambient_map);
+        }
+        if(*mat.diffuse_map)
+        {
+            mesh.diffuse_map = load_texture(mat.diffuse_map);
+        }
+        if(* mat.specular_map)
+        {
+            mesh.specular_map = load_texture(mat.specular_map);
+        }
+    }
+    else if (data.material.size())
+    {
+        std::cerr << "ERROR: Failed retrieving material: '" << mesh.data.material << "'." << std::endl;
+    }
+    return mesh;
 }
 
 Model load_model(ModelData model_data)
 {
     Model model;
 
+    model.path = model_data.path;
     //get model name from path
     std::string dir = model_data.path; 
     size_t slash_pos = dir.find_last_of("/") + 1;
@@ -45,19 +75,19 @@ Model load_model(ModelData model_data)
     std::string name = dir.substr(slash_pos, dot_pos);
     model.name = name;
 
+    model.materials = model_data.materials;
     //load meshes and add to counters
     int size = model_data.meshes.size();
     for (int i = 0; i < size; ++i)
     {
-        MeshData mesh = model_data.meshes.at(i);
-        load_mesh(mesh); //assigns VAO index in struct
-        model_data.meshes.at(i) = mesh;
-        model.vertice_count += mesh.vertices.size();
-        model.indice_count += mesh.indices.size();
-        model.material_count += (mesh.material.size() ? 1 : 0);
+        MeshData mesh_data = model_data.meshes.at(i);
+        Mesh mesh = load_mesh(mesh_data, model_data.materials);
+        model.meshes.push_back(mesh);
+        model.vertice_count += mesh_data.vertices.size();
+        model.indice_count += mesh_data.indices.size();
+        model.material_count += (mesh_data.material.size() ? 1 : 0);
     }
 
-    model.data = model_data;
     return model;
 }
 
@@ -66,12 +96,11 @@ Model load_model(ModelData model_data)
 **/
 void draw_model(Model model)
 {
-    ModelData data = model.data;
-    unsigned int size = data.meshes.size();
+    unsigned int size = model.meshes.size();
     for (int i = 0; i < size; ++i)
     {
-        MeshData mesh = data.meshes.at(i);
+        Mesh mesh = model.meshes.at(i);
         glBindVertexArray(mesh.VAO);
-        glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, mesh.data.indices.size(), GL_UNSIGNED_INT, 0);
     }
 }

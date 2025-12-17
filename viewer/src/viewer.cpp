@@ -16,7 +16,6 @@ using namespace std;
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
-#include "texture.h"
 
 GLFWwindow* window = NULL;
 float cameraSensitivity = 150.0f;

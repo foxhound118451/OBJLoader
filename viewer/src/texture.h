@@ -1,5 +1,7 @@
-#pragma once
+#ifndef TEXTURE_H
 #define TEXTURE_H
+
+#include <iostream>
 #include "glad/gl.h"
 #include "stb_image.h"
 
@@ -27,3 +29,4 @@ unsigned int load_texture(char* path)
     stbi_image_free(data);
     return texture;
 }
+#endif

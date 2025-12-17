@@ -33,7 +33,6 @@ struct MeshData
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     float smoothing = 0;
-    unsigned int VAO = 0;
 };
 
 struct ModelData
