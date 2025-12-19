@@ -39,7 +39,7 @@ vector<Material> parse_mtl(const char* path)
         char* strtok_state{};
         int i = 0;
         char *linetype{};
-        if (linetype = strtok_r(line, " ", &strtok_state)) //skip empty lines
+        if ((linetype = strtok_r(line, " ", &strtok_state))) //skip empty lines
         {
             if (!strcmp(linetype, "newmtl")) //material declaration
             {
@@ -134,12 +134,12 @@ int parse_material(Material* material)
                 switch (line[i+1])
                 {
                     case 's': //specular exponent
-                        material->specular_pow = stof(line+3);
+                        material->specular_pow = stof(line+3+i);
                         break;
                 }
                 break;
             case 'm': //texture map statement 'map_xx'
-                parse_map(material, line);
+                parse_map(material, line+i);
                 break;
         }
     }
@@ -160,10 +160,10 @@ static Color parse_color(char* line)
     strtok_r(line, " ", &strtok_state);
     char* cur_color = strtok_r(NULL, " ", &strtok_state);
     color.r = stof(cur_color);
-    if (cur_color = strtok_r(NULL, " ", &strtok_state))
+    if ((cur_color = strtok_r(NULL, " ", &strtok_state)))
     {
         color.g = stof(cur_color);
-        if (cur_color = strtok_r(NULL, " ", &strtok_state))
+        if ((cur_color = strtok_r(NULL, " ", &strtok_state)))
         {
             color.b = stof(cur_color);
         }
@@ -187,9 +187,12 @@ static void parse_map(Material *material, char* line)
 {
     char* strtok_state{};
     //parse type of map and path
-    char type[128];
-    char path[128]; 
-    sscanf (line, "%*[^_]_%s %s", type, path); 
+    char type[128]{};
+    char path[256]{}; 
+    strcpy(path, material->path);
+    char mat_path[256]{};
+    sscanf (line, "%*[^_]_%s %s", type, mat_path); 
+    strcat (path, mat_path);
 
     switch(type[0])
     {

@@ -20,19 +20,19 @@ struct input_buffers
     vector<unsigned int> indices;
 };
 
-struct output_buffers 
+struct output_buffers
 {
-    vector<Vertex> vertices;
-    vector<unsigned int> indices;
+    vector<MeshData> meshes;
     unordered_map<string, Material> materials;
-}; 
+};
+
 
 //prototypes
 static int parse_obj_file(const char* file_path, output_buffers* out_buf);
 static void parse_vertex(char* line, vector<float>* vertices);
 static inline void parse_texcoord(char* line, vector<float>* texcoords);
-static void parse_face(char* line, input_buffers input_buffers, output_buffers* out_buf, unordered_map<string, unsigned int> *vertex_map);
-static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& input_buffers, output_buffers* out_buf, unordered_map<string, unsigned int>* vertex_map);
+static void parse_face(char* line, input_buffers input_buffers, MeshData& out_buf, unordered_map<string, unsigned int> *vertex_map);
+static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& input_buffers, MeshData& out_buf, unordered_map<string, unsigned int>* vertex_map);
 static vector<unsigned int> fan_triangulate(vector<unsigned int>* face);
 
 //global vars
@@ -46,19 +46,21 @@ ModelData load_obj(const char* path)
 {
 
     output_buffers *out_buf = new output_buffers;
-
     //if (!parse_obj_file(path, output_buffers))
     parse_obj_file(path, out_buf);
     //{
         //parse faces, use indices to create final vertex & indice array.
-    MeshData mesh;
 
-    mesh.vertices = out_buf->vertices;
-    mesh.indices = out_buf->indices;
+
     ModelData model;
     model.path = path;
     model.materials = out_buf->materials;
-    model.meshes.push_back(mesh);
+    int size = out_buf->meshes.size();
+    for (int i = 0; i < size; ++i)
+    {
+        MeshData mesh = out_buf->meshes.at(i);
+        model.meshes.push_back(mesh);
+    }
     delete out_buf;
     return model;
 
@@ -83,6 +85,7 @@ static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
     }
 
     vector<Vertex> vertices;
+    MeshData mesh;
     unordered_map<string, unsigned int> vertex_map;
     input_buffers input_buffers;
 
@@ -130,16 +133,39 @@ static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
                 }
                 break;
             }
-            case 'f': //face
+            case 'o': //group/object
+            case 'g':
             {
-                parse_face(line, input_buffers, output_buffers, &vertex_map);
+                //get name
+                char* strtok_state{};
+                strtok_r(line, " ", &strtok_state);
+                string name_str = strtok_r(NULL, " ", &strtok_state);
+
+                if(!mesh.name.empty())//previous mesh exists
+                {
+                    //push prev mesh
+                    output_buffers->meshes.push_back(mesh);
+                    //clear mesh data
+                    MeshData new_mesh; 
+                    mesh = new_mesh;
+                    vertex_map.clear();
+                }
+
+                mesh.name = name_str;
+
                 break;
             }
-            case 'm': //material declaration
+
+            case 'f': //face
+            {
+                parse_face(line, input_buffers, mesh, &vertex_map);
+                break;
+            }
+            case 'm': //material file declaration
             {
                 strtok(line, " ");
 
-                string dir(obj_path);
+                string dir = obj_path;
                 size_t pos = dir.find_last_of("/"); //get directory of model file
                 dir = dir.substr(0, pos);
 
@@ -151,18 +177,25 @@ static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
 
                 int len = materials.size();
                 //map materials to their names so meshes dont store entire material
-                for (int i = 0; i < len; ++i)
+                for (auto& it : materials)
                 {
-                    output_buffers->materials.insert({string(materials.at(i).name), materials.at(i)});
+                    Material material = (Material) it;
+                    output_buffers->materials.insert({material.name, material});
                 }
                 break;
             }
-            case 'u': //material of current obj/group
+            case 'u': //set material of current mesh
             {
+                char* strtok_state{};
+                strtok_r(line, " ", &strtok_state);
+                char* material = strtok_r(NULL, " ", &strtok_state);
+                string material_str = material;
+                mesh.material = material_str;
                 break;
             }
         }
     }
+    output_buffers->meshes.push_back(mesh); //last mesh in file
     file.close();
     if (file.bad())
     {
@@ -211,7 +244,7 @@ inline void parse_vertex(char* line, vector<float> *vertices)
 * if already mapped, set indice to indice of Vertex
 * else append vertex buffer with new vertex (v/vt/vn) and set indice to vertex
 */
-static void parse_face(char* line, input_buffers input_buffers, output_buffers* out_buf, unordered_map<string, unsigned int>* vertex_map)
+static void parse_face(char* line, input_buffers input_buffers, MeshData& out_buf, unordered_map<string, unsigned int>* vertex_map)
 {
     char* strtok_state{};
     char* face_vertex = strtok_r(line, " ", &strtok_state); // v/vt/vn vertex indice set (only parsing vertex indice so far)
@@ -224,21 +257,21 @@ static void parse_face(char* line, input_buffers input_buffers, output_buffers* 
 
     //fan triangulate vertex indices so that any polygon becomes tri
     vector<unsigned int> indices = fan_triangulate(&face);
-    out_buf->indices.insert(out_buf->indices.end(), indices.begin(), indices.end());
+    out_buf.indices.insert(out_buf.indices.end(), indices.begin(), indices.end());
 }
 
 /*
 * Parse string of vertex indices  
 *
 */
-static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& input_buffers, output_buffers* out_buf, unordered_map<string, unsigned int> *vertex_map)
+static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& input_buffers, MeshData& out_buf, unordered_map<string, unsigned int> *vertex_map)
 {
     string face_vertex_copy = face_vertex;
     const auto i = vertex_map->find(face_vertex);
     if (i == vertex_map->end())
     {
         //vertex indices not yet parsed
-        unsigned int cur_index = (out_buf->vertices).size();//index of current vertex
+        unsigned int cur_index = (out_buf.vertices).size();//index of current vertex
 
         vertex_map->insert({ face_vertex_copy, cur_index }); //create new entry pointing to current index in vertex buffer
 
@@ -250,15 +283,15 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
         char* strtok_state{};
         char* indice_str{};
 
-        if (indice_str = strtok_r(face_vertex, "/", &strtok_state))
+        if ((indice_str = strtok_r(face_vertex, "/", &strtok_state)))
         {
             v = stoi(indice_str) - 1; //make index start at 0
         }
-        if (indice_str = strtok_r(NULL, "/", &strtok_state))
+        if ((indice_str = strtok_r(NULL, "/", &strtok_state)))
         {
             vt = stoi(indice_str) - 1;
         }
-        if (indice_str = strtok_r(NULL, "/", &strtok_state))
+        if ((indice_str = strtok_r(NULL, "/", &strtok_state)))
         {
             vn = stoi(indice_str) - 1;
         }
@@ -282,7 +315,7 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
             vertex.nz = input_buffers.normals.at((vn * 3) + 2);
         }
         //push vertex to final buffer
-        out_buf->vertices.push_back(vertex);
+        out_buf.vertices.push_back(vertex);
         return cur_index;
     }
     else

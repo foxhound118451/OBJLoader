@@ -80,12 +80,12 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 
-	Model obj;
-	obj = load_model(load_obj("models/t_34/t_34_obj.obj"));
+	Model obj2 = load_model(load_obj("models/zis-42/ZIS_42.obj"));
+
+	Model obj = load_model(load_obj("models/t_34/t_34_obj.obj"));
 
 	cout << "Read " << obj.vertice_count << " vertices, " << obj.indice_count << " indices." << endl;
 
-	Model obj2 = load_model(load_obj("models/zis-42/ZIS_42.obj"));
 
         Model prism = load_model(load_obj("models/prism.obj"));
 

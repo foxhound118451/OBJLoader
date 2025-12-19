@@ -51,7 +51,7 @@ inline Mesh load_mesh(MeshData data, std::unordered_map<std::string, Material> m
         {
             mesh.diffuse_map = load_texture(mat.diffuse_map);
         }
-        if(* mat.specular_map)
+        if(*mat.specular_map)
         {
             mesh.specular_map = load_texture(mat.specular_map);
         }
