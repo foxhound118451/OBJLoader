@@ -184,11 +184,11 @@ static inline void parse_map(char* line, Material& material)
     char* strtok_state{};
     //parse type of map and path
     char type[128]{};
-    char path[256]{}; 
-    strcpy(path, material.path);
+    char map_path[256]{}; 
+    strcpy(map_path, material.path);
     char mat_path[256]{};
     sscanf (line, "%*[^_]_%s %s", type, mat_path); 
-    strcat (path, mat_path);
+    strcat (map_path, mat_path);
 
     switch(type[0])
     {
@@ -196,13 +196,13 @@ static inline void parse_map(char* line, Material& material)
             switch(type[1])
             {
                 case 'a':
-                    strcpy(material.ambient_map, path);
+                    strcpy(material.ambient_map, map_path);
                     break;
                 case 'd':
-                    strcpy(material.diffuse_map, path);
+                    strcpy(material.diffuse_map, map_path);
                     break;
                 case 's':
-                    strcpy(material.specular_map, path);
+                    strcpy(material.specular_map, map_path);
                     break;
             }
             break;

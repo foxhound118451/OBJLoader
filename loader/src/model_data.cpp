@@ -133,8 +133,7 @@ static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
                 }
                 break;
             }
-            case 'o': //group/object
-            case 'g':
+            case 'g': //group
             {
                 //get name
                 char* strtok_state{};
@@ -169,8 +168,8 @@ static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
                 size_t pos = dir.find_last_of("/"); //get directory of model file
                 dir = dir.substr(0, pos);
 
-                char mtl_path[128];
-                strcat(mtl_path, dir.c_str());
+                char mtl_path[128]{};
+                strcpy(mtl_path, dir.c_str());
                 strcat(mtl_path, "/");
                 strcat (mtl_path, strtok(NULL, " "));
                 vector<Material> materials = parse_mtl(mtl_path);
@@ -210,16 +209,27 @@ static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
 static inline void parse_texcoord(char* line, vector<float>* texcoords)
 {
     char* strtok_state{};
-    char* texcoord = strtok_r(line, " ", &strtok_state);
-
-    texcoord = strtok_r(NULL, " ", &strtok_state);
-    (*texcoords).push_back(stof(texcoord));
-    texcoord = strtok_r(NULL, " ", &strtok_state);
-    (*texcoords).push_back(stof(texcoord));
-    if ((texcoord = strtok_r(NULL, " ", &strtok_state)))
+    struct 
     {
-        (*texcoords).push_back(0.0f);
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+
+    } texcoord;
+    int read = sscanf(line, "vt %f %f %f", &texcoord.x, &texcoord.y, &texcoord.z);
+    switch (read)
+    {
+        case 2:
+            texcoords->push_back(texcoord.x);
+            texcoords->push_back(texcoord.y);
+            break;
+        case 3:
+            texcoords->push_back(texcoord.x);
+            texcoords->push_back(texcoord.y);
+            texcoords->push_back(texcoord.z);
+            break;
     }
+
 }
 
 /*

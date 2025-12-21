@@ -17,8 +17,9 @@ struct Model
 {
     std::vector<Mesh> meshes;
     std::unordered_map<std::string, Material> materials;
-    std::string name;
-    std::string path;
+    std::unordered_map<std::string, unsigned int> textures;
+    std::string name{};
+    std::string path{};
     unsigned int vertice_count = 0; //store counts
     unsigned int indice_count = 0;
     unsigned int material_count = 0;

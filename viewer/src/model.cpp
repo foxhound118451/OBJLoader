@@ -9,7 +9,7 @@
  * Load mesh's data into appropriate OpenGL buffers,
  * initialize buffer objects & texures, then store IDs in given mesh.
 **/
-inline Mesh load_mesh(MeshData data, std::unordered_map<std::string, Material> materials)
+inline Mesh load_mesh(MeshData data, std::unordered_map<std::string, Material> materials, std::unordered_map<std::string, unsigned int>& textures)
 {
     Mesh mesh;
     mesh.data = data;
@@ -46,15 +46,39 @@ inline Mesh load_mesh(MeshData data, std::unordered_map<std::string, Material> m
         Material mat = (*search).second;
         if(*mat.ambient_map)
         {
-            mesh.ambient_map = load_texture(mat.ambient_map);
+            if(auto search = textures.find(mat.ambient_map); search != textures.end())
+            {
+                mesh.ambient_map = search->second;
+            }
+            else
+            {
+                mesh.ambient_map = load_texture(mat.ambient_map);
+                textures.insert({mat.ambient_map, mesh.ambient_map});
+            }
         }
         if(*mat.diffuse_map)
         {
-            mesh.diffuse_map = load_texture(mat.diffuse_map);
+            if(auto search = textures.find(mat.diffuse_map); search != textures.end())
+            {
+                mesh.diffuse_map = search->second;
+            }
+            else
+            {
+                mesh.diffuse_map = load_texture(mat.diffuse_map);
+                textures.insert({mat.diffuse_map, mesh.diffuse_map});
+            }
         }
         if(*mat.specular_map)
         {
-            mesh.specular_map = load_texture(mat.specular_map);
+            if(auto search = textures.find(mat.specular_map); search != textures.end())
+            {
+                mesh.specular_map = search->second;
+            }
+            else
+            {
+                mesh.specular_map = load_texture(mat.specular_map);
+                textures.insert({mat.specular_map, mesh.specular_map});
+            }
         }
     }
     else if (data.material.size())
@@ -82,7 +106,7 @@ Model load_model(ModelData model_data)
     for (int i = 0; i < size; ++i)
     {
         MeshData mesh_data = model_data.meshes.at(i);
-        Mesh mesh = load_mesh(mesh_data, model_data.materials);
+        Mesh mesh = load_mesh(mesh_data, model_data.materials, model.textures);
         model.meshes.push_back(mesh);
         model.vertice_count += mesh_data.vertices.size();
         model.indice_count += mesh_data.indices.size();
@@ -111,13 +135,13 @@ void draw_model(Model model, Shader shader)
         {
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, mesh.diffuse_map);
-            shader.setInt("ambient_map", 1);
+            shader.setInt("diffuse_map", 1);
         }
         if (mesh.specular_map)
         {
             glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, mesh.specular_map);
-            shader.setInt("ambient_map", 2);
+            shader.setInt("specular_map", 2);
         }
 
         glBindVertexArray(mesh.VAO);
