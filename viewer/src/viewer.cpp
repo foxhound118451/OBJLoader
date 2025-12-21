@@ -80,14 +80,13 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 
-	Model obj2 = load_model(load_obj("models/zis-42/ZIS_42.obj"));
 
-	Model obj = load_model(load_obj("models/t_34/t_34_obj.obj"));
+	Model obj = load_model(load_obj("models/zis-42/ZIS_42.obj"));
 
 	cout << "Read " << obj.vertice_count << " vertices, " << obj.indice_count << " indices." << endl;
 
 
-        Model prism = load_model(load_obj("models/prism.obj"));
+        //Model prism = load_model(load_obj("models/prism.obj"));
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	prev_x = s_width / 2.0f;
@@ -119,22 +118,13 @@ int main()
 		//draw model
 		mat4 model = mat4(1.0f);
 		model = translate(model, vec3(0.0f, 2.0f, -3.0f));
-		model = scale(model, vec3(0.1f));
+		model = scale(model, vec3(0.01f));
 		shader.setMat4("model", model);
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
                 shader.setVec3("objectColor", 0.5, 0.5, 0.9);
-		draw_model(obj);
+		draw_model(obj, shader);
 		int i = glGetError();
-
-		//draw other thingy
-		model = mat4(1.0f);
-                model = scale(model, vec3(0.01f));
-		model = translate(model, vec3(5.0f, 2.0f, -3.0f));
-                model = rotate(model, radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
-		shader.setMat4("model", model);
-
-		draw_model(obj2);
 
 		//light;
 		light.use();
@@ -146,7 +136,7 @@ int main()
                 lightPos = vec3(1.0f, 3.0f, 1.0f);
 		model = translate(model, lightPos);
 		light.setMat4("model", model);
-		draw_model(prism);
+		//draw_model(prism, shader);
 		//glDrawArrays(GL_TRIANGLES, 0, 36);
 		
 		glfwSwapBuffers(window);

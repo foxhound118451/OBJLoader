@@ -86,6 +86,10 @@ public:
 		glDeleteShader(fragment);
 		ID = program;
 	}
+        void setInt(const string&name, int val)
+        {
+            glUniform1i(glGetUniformLocation(ID, name.c_str()), val);
+        }
 	void setFloat(const string &name, float val)
 	{
 		glUniform1f(glGetUniformLocation(ID, name.c_str()), val);

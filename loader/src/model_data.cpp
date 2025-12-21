@@ -180,7 +180,7 @@ static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
                 for (auto& it : materials)
                 {
                     Material material = (Material) it;
-                    output_buffers->materials.insert({material.name, material});
+                    output_buffers->materials.insert({string(material.name), material});
                 }
                 break;
             }
@@ -216,6 +216,10 @@ static inline void parse_texcoord(char* line, vector<float>* texcoords)
     (*texcoords).push_back(stof(texcoord));
     texcoord = strtok_r(NULL, " ", &strtok_state);
     (*texcoords).push_back(stof(texcoord));
+    if ((texcoord = strtok_r(NULL, " ", &strtok_state)))
+    {
+        (*texcoords).push_back(0.0f);
+    }
 }
 
 /*
@@ -302,11 +306,11 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
         vertex.y = input_buffers.vertices.at((v * 3) + 1);
         vertex.z = input_buffers.vertices.at((v * 3) + 2);
         //texcoord
-        //if (vt != INT_MAX)
-        //{ 
-                //vertex.tx = input_buffers.tex_coords.at(vt * 2);
-                //vertex.ty = input_buffers.tex_coords.at((vt * 2) + 1);
-        //}
+        if (vt != INT_MAX)
+        { 
+                vertex.tx = input_buffers.tex_coords.at(vt * 3);
+                vertex.ty = input_buffers.tex_coords.at((vt * 3) + 1);
+        }
         //normal
         if (vn != INT_MAX)
         {

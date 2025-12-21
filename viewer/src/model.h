@@ -1,7 +1,8 @@
 #pragma once
 #define MODEL_H 
-#include "model_data.h"
 #include <vector>
+#include "model_data.h"
+#include "shader.h"
 
 struct Mesh
 {
@@ -31,4 +32,4 @@ Model load_model(ModelData model_data);
 /*
  * Draw all meshes in model 
 */
-void draw_model(Model model);
+void draw_model(Model model, Shader shader);

@@ -6,10 +6,10 @@
 using namespace std;
 
 //Prototypes
-int parse_material(Material* material);
-static Color parse_color(char* line);
+static inline int parse_material(std::string& line, const char* path, Material& material);
+static inline Color parse_color(char* line);
 static inline char* fix_newline(std::string line);
-static void parse_map(Material *material, char* line);
+static inline void parse_map(Material& material, char* line);
 
 ifstream *file;
 
@@ -23,7 +23,7 @@ vector<Material> parse_mtl(const char* path)
         delete file;
         return materials;
     }
-
+    Material material;
     while (!(file->eof() || file->fail())) //parse by line
     {
         std::string line_str;
@@ -36,47 +36,36 @@ vector<Material> parse_mtl(const char* path)
             line[len - 1] = '\0';
         }
 
-        char* strtok_state{};
-        int i = 0;
-        char *linetype{};
-        if ((linetype = strtok_r(line, " ", &strtok_state))) //skip empty lines
+        int offset = 0;
+        if (line[0] == '\t') //skip tabs
         {
-            if (!strcmp(linetype, "newmtl")) //material declaration
-            {
-                //parse material
-                Material* material = new Material;
+            offset = 1;
+        }
 
-                string dir(path);
-                size_t pos = dir.find_last_of("/"); //get directory of mtl 
-                dir = dir.substr(0, pos);
-                char mtl_path[128]; 
-                strcat(mtl_path, dir.c_str());
-                strcat(mtl_path, "/");
-                strcpy(material->path, mtl_path); //copy material directory into struct
-
-                char *name = strtok_r(NULL, " ", &strtok_state);
-                strcpy(material->name, name);
-                if(parse_material(material)) //parse body of material statement
-                {
-                    materials.push_back(*material);
-                    delete material;
-                }
-                if(!parse_material(material)) //parse body of material statement
-                {
-                    cerr << "ERROR: Failed parsing material with name: \"" << material->name << "\"" << endl;
-                    //free material
-                    file->close();
-                    delete file;
-                    delete material;
-                    return materials;
-                }
-            }
-            else if (line[0] != '#' && line[0] != '\r') //skip comments and carriage ret, throw error if not comment or material
+        char* strtok_state{};
+        char *linetype{};
+        linetype = strtok_r(line, " ", &strtok_state); //skip empty spaces
+        if (linetype) //ignore empty lines
+        {
+            switch (*linetype)
             {
-                cerr << "ERROR: Invalid argument in mtl file, with line '" << line_str << "'." << endl;
-                file->close();
-                delete file;
-                return materials;
+                case 'n': //material definition
+                {
+                    if (*material.name) //prev material exists
+                    {
+                        materials.push_back(material);
+                        Material mat; //wipe material
+                        material = mat;
+                    }
+                    char *name = strtok_r(NULL, " ", &strtok_state);
+                    strcpy(material.name, name);
+                    break;
+                }
+                default: 
+                {
+                    parse_material(line_str, path, material);
+                    break;
+                }
             }
         }
     }
@@ -84,66 +73,71 @@ vector<Material> parse_mtl(const char* path)
     {
         cerr << "ERROR: Failed reading material file." << endl;
     }
+    else //push last material in file
+    {
+        materials.push_back(material);
+    }
     file->close();
     delete file;
     return materials;
 }
 
 /*
-* Parse lines until error, EOF, or material declaration
+ * Parse material starting at cur pos in file.
+ * Store any parsed element in corresponding var in Material struct.
+ * Returns 1 on success, -1 on error.
 */
-int parse_material(Material* material)
+inline int parse_material(std::string& line_str, const char* path, Material& material)
 {
-    char *line;
-    do
+    //parse line 
+    char* strtok_state{};
+
+
+    string dir(path);
+    size_t pos = dir.find_last_of("/"); //get directory of mtl 
+    dir = dir.substr(0, pos);
+    char mtl_path[128]{}; 
+    strcpy(mtl_path, dir.c_str());
+    strcat(mtl_path, "/");
+    strcpy(material.path, mtl_path); //copy material directory into struct
+
+    int i = 0;
+    int len = line_str.length();
+    if (line_str[len - 1] == '\r')
     {
-        std::string line_str;
-        std::getline(*file, line_str);
-        
-        size_t len = line_str.size();
-        char line[len + 1];
-        strcpy(line, line_str.c_str());
-        if (line[len - 1] == '\r')
-        {
-            line[len - 1] = '\0';
-        }
-
-        int i = 0;
-        if (line[0] == '\t') //skip tabs
-        {
-            i = 1;
-        }
-
-        switch (line[i])
-        {
-            case 'K': //color arg
-                switch (line[i+1])
-                {
-                    case 'a': //ambient
-                        material->ambient = parse_color(line); 
-                        break;
-                    case 'd': //diffuse
-                        material->diffuse = parse_color(line);
-                        break;
-                    case 's': //specular
-                        material->specular = parse_color(line);
-                        break;
-                }
-                break;
-            case 'N': 
-                switch (line[i+1])
-                {
-                    case 's': //specular exponent
-                        material->specular_pow = stof(line+3+i);
-                        break;
-                }
-                break;
-            case 'm': //texture map statement 'map_xx'
-                parse_map(material, line+i);
-                break;
-        }
+        line_str[len - 1] = '\0';
     }
-    while (!(file->eof() || file->bad() || *line == 'n'));
+
+    char* line = (char*) line_str.c_str();
+    line = strtok(line, " ");
+    switch (line[i])
+    {
+        case 'K': //color arg
+            switch (line[i+1])
+            {
+                case 'a': //ambient
+                    material.ambient = parse_color(line); 
+                    break;
+                case 'd': //diffuse
+                    material.diffuse = parse_color(line);
+                    break;
+                case 's': //specular
+                    material.specular = parse_color(line);
+                    break;
+            }
+            break;
+        case 'N': 
+            switch (line[i+1])
+            {
+                case 's': //specular exponent
+                    material.specular_pow = stof(line+3+i);
+                    break;
+            }
+            break;
+        case 'm': //texture map statement 'map_xx'
+            parse_map(material, line+i);
+            break;
+    }
     return 1;
 }
 
@@ -153,7 +147,7 @@ int parse_material(Material* material)
  * If one arg, set all colors to value.
  * If 3 args, set colors to respective args.
 */
-static Color parse_color(char* line)
+static inline Color parse_color(char* line)
 {
     Color color = {0.0f, 0.0f, 0.0f};
     char* strtok_state{};
@@ -183,13 +177,13 @@ static Color parse_color(char* line)
 /*
  * Assign texture map path to appropriate place in Material struct.
 */
-static void parse_map(Material *material, char* line)
+static inline void parse_map(Material& material, char* line)
 {
     char* strtok_state{};
     //parse type of map and path
     char type[128]{};
     char path[256]{}; 
-    strcpy(path, material->path);
+    strcpy(path, material.path);
     char mat_path[256]{};
     sscanf (line, "%*[^_]_%s %s", type, mat_path); 
     strcat (path, mat_path);
@@ -200,13 +194,13 @@ static void parse_map(Material *material, char* line)
             switch(type[1])
             {
                 case 'a':
-                    strcpy(material->ambient_map, path);
+                    strcpy(material.ambient_map, path);
                     break;
                 case 'd':
-                    strcpy(material->diffuse_map, path);
+                    strcpy(material.diffuse_map, path);
                     break;
                 case 's':
-                    strcpy(material->specular_map, path);
+                    strcpy(material.specular_map, path);
                     break;
             }
             break;

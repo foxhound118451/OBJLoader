@@ -1,11 +1,16 @@
 #version 330 core
 in vec3 Normal;
 in vec3 FragPos;
+in vec2 TexCoord;
 
 out vec4 FragColor;
 
 uniform vec3 objectColor = vec3(0.5, 0.5, 0.9);
 uniform vec3 lightPos;
+
+uniform sampler2D ambient_map;
+uniform sampler2D diffuse_map;
+uniform sampler2D specular_map;
 
 void main()
 {
@@ -20,6 +25,6 @@ void main()
 	float diff = max(dot(lightDir, norm), 0.0f);
 	vec3 diffuse = diff * lightColor;
 	
-	vec3 result = (ambient + diffuse) * objectColor;
-	FragColor = vec4(result, 1.0f);
+	vec3 result = (ambient + diffuse);
+	FragColor = texture(diffuse_map, TexCoord) * vec4(result, 1.0f);
 }

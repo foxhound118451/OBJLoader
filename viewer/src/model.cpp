@@ -2,6 +2,7 @@
 #include "model.h"
 #include "glad/gl.h"
 #include "texture.h"
+#include "shader.h"
 
 
 /**
@@ -94,12 +95,31 @@ Model load_model(ModelData model_data)
 /**
  * Draw all meshes in model.
 **/
-void draw_model(Model model)
+void draw_model(Model model, Shader shader)
 {
     unsigned int size = model.meshes.size();
     for (int i = 0; i < size; ++i)
     {
         Mesh mesh = model.meshes.at(i);
+        if (mesh.ambient_map)
+        {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, mesh.ambient_map);
+            shader.setInt("ambient_map", 0);
+        }
+        if (mesh.diffuse_map)
+        {
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, mesh.diffuse_map);
+            shader.setInt("ambient_map", 1);
+        }
+        if (mesh.specular_map)
+        {
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, mesh.specular_map);
+            shader.setInt("ambient_map", 2);
+        }
+
         glBindVertexArray(mesh.VAO);
         glDrawElements(GL_TRIANGLES, mesh.data.indices.size(), GL_UNSIGNED_INT, 0);
     }

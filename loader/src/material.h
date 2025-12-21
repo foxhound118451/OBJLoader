@@ -5,9 +5,9 @@
 
 struct Color
 {
-	float r = 0.0f;
-	float g = 0.0f;
-	float b = 0.0f;
+	float r = 1.0f;
+	float g = 1.0f;
+	float b = 1.0f;
 };
 
 /*
@@ -16,7 +16,7 @@ struct Color
 struct Material
 {
 	char name[64]{}; //taken from 'newmtl' statement 
-        char path[256]; //path of material
+        char path[256]{}; //path of material
 	Color ambient; //'Ka' ambient 
 	Color diffuse; //'Kd' diffuse
 	Color specular; //'Ks' specular
