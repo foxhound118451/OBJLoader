@@ -6,10 +6,10 @@
 using namespace std;
 
 //Prototypes
-static inline int parse_material(std::string& line, const char* path, Material& material);
+static inline int parse_material_element(std::string& line, const char* path, Material& material);
 static inline Color parse_color(char* line);
 static inline char* fix_newline(std::string line);
-static inline void parse_map(Material& material, char* line);
+static inline void parse_map(char* line, Material& material);
 
 ifstream *file;
 
@@ -63,7 +63,7 @@ vector<Material> parse_mtl(const char* path)
                 }
                 default: 
                 {
-                    parse_material(line_str, path, material);
+                    parse_material_element(line_str, path, material);
                     break;
                 }
             }
@@ -83,11 +83,10 @@ vector<Material> parse_mtl(const char* path)
 }
 
 /*
- * Parse material starting at cur pos in file.
  * Store any parsed element in corresponding var in Material struct.
  * Returns 1 on success, -1 on error.
 */
-inline int parse_material(std::string& line_str, const char* path, Material& material)
+inline int parse_material_element(std::string& line_str, const char* path, Material& material)
 {
     //parse line 
     char* strtok_state{};
@@ -101,7 +100,6 @@ inline int parse_material(std::string& line_str, const char* path, Material& mat
     strcat(mtl_path, "/");
     strcpy(material.path, mtl_path); //copy material directory into struct
 
-    int i = 0;
     int len = line_str.length();
     if (line_str[len - 1] == '\r')
     {
@@ -109,40 +107,47 @@ inline int parse_material(std::string& line_str, const char* path, Material& mat
     }
 
     char* line = (char*) line_str.c_str();
-    line = strtok(line, " ");
-    switch (line[i])
+    if (line[0] == '\t') //skip tabs
+    {
+        ++line;
+    }
+    switch (line[0])
     {
         case 'K': //color arg
-            switch (line[i+1])
+            switch (line[1])
             {
                 case 'a': //ambient
-                    material.ambient = parse_color(line); 
+                    line = strtok(line, " ");
+                    material.ambient = parse_color(strtok(NULL, " ")); 
                     break;
                 case 'd': //diffuse
-                    material.diffuse = parse_color(line);
+                    line = strtok(line, " ");
+                    material.diffuse = parse_color(strtok(NULL, " "));
                     break;
                 case 's': //specular
-                    material.specular = parse_color(line);
+                    line = strtok(line, " ");
+                    material.specular = parse_color(strtok(NULL, " "));
                     break;
             }
             break;
         case 'N': 
-            switch (line[i+1])
+            switch (line[1])
             {
                 case 's': //specular exponent
-                    material.specular_pow = stof(line+3+i);
+                    line = strtok(line, " ");
+                    material.specular_pow = stof(strtok(NULL, " "));
                     break;
             }
             break;
         case 'm': //texture map statement 'map_xx'
-            parse_map(material, line+i);
+            parse_map(line, material);
             break;
     }
     return 1;
 }
 
 /*
- * Parse line for color argument 
+ * Parse of color arguments
  * color read as floats (R G B) separated by spaces.
  * If one arg, set all colors to value.
  * If 3 args, set colors to respective args.
@@ -150,26 +155,23 @@ inline int parse_material(std::string& line_str, const char* path, Material& mat
 static inline Color parse_color(char* line)
 {
     Color color = {0.0f, 0.0f, 0.0f};
-    char* strtok_state{};
-    strtok_r(line, " ", &strtok_state);
-    char* cur_color = strtok_r(NULL, " ", &strtok_state);
-    color.r = stof(cur_color);
-    if ((cur_color = strtok_r(NULL, " ", &strtok_state)))
+    switch(sscanf(line, "%f %f %f", &color.r, &color.g, &color.b))
     {
-        color.g = stof(cur_color);
-        if ((cur_color = strtok_r(NULL, " ", &strtok_state)))
+        case 1:
         {
-            color.b = stof(cur_color);
+            color.g = color.r;
+            color.b = color.r;
+            break;
         }
-        else
+        case 3:
         {
-            cerr << "ERROR: Invalid color format in mtl file." << endl;
+            break;
         }
-    }
-    else
-    {
-        color.b = color.r;
-        color.g = color.r;
+        default:
+        {
+            std::cerr << "ERROR: Failed parsing color." << std::endl;
+            break;
+        }
     }
     return color;
 }
@@ -177,7 +179,7 @@ static inline Color parse_color(char* line)
 /*
  * Assign texture map path to appropriate place in Material struct.
 */
-static inline void parse_map(Material& material, char* line)
+static inline void parse_map(char* line, Material& material)
 {
     char* strtok_state{};
     //parse type of map and path
