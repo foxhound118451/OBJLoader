@@ -34,7 +34,7 @@ static void windowSizeCallback(GLFWwindow* window, int width, int height);
 static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 
 Camera camera(vec3(0.0, 2.0f, 3.0f), vec3(0.0, 1.0f, 0.0f));
-int main()
+int main(int argc, char* argv[])
 {
 	if (!glfwInit())
 	{
@@ -80,8 +80,16 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 
-
-	Model obj = load_model(load_obj("models/zis-42/ZIS_42.obj"));
+        Model obj;
+        if (argc == 2)
+        {
+            obj = load_model(load_obj(argv[1]));
+        }
+        else
+        {
+            std::cout << "Usage: OBJViewer [path]." << std::endl;
+            return 1;
+        }
 
 	cout << "Read " << obj.vertice_count << " vertices, " << obj.indice_count << " indices." << endl;
 
@@ -118,7 +126,6 @@ int main()
 		//draw model
 		mat4 model = mat4(1.0f);
 		model = translate(model, vec3(0.0f, 2.0f, -3.0f));
-		model = scale(model, vec3(0.01f));
 		shader.setMat4("model", model);
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);

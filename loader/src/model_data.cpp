@@ -217,17 +217,15 @@ static inline void parse_texcoord(char* line, vector<float>* texcoords)
 
     } texcoord;
     int read = sscanf(line, "vt %f %f %f", &texcoord.x, &texcoord.y, &texcoord.z);
-    switch (read)
+    if (read)
     {
-        case 2:
             texcoords->push_back(texcoord.x);
             texcoords->push_back(texcoord.y);
-            break;
-        case 3:
-            texcoords->push_back(texcoord.x);
-            texcoords->push_back(texcoord.y);
-            texcoords->push_back(texcoord.z);
-            break;
+            texcoords->push_back(0.0f);
+    }
+    else
+    {
+        std::cerr << "ERROR: Invalid texture coordinate." << std::endl;
     }
 
 }
@@ -275,8 +273,8 @@ static void parse_face(char* line, input_buffers input_buffers, MeshData& out_bu
 }
 
 /*
-* Parse string of vertex indices  
-*
+* Parse string of vertex indices,
+* return indice of vertex
 */
 static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& input_buffers, MeshData& out_buf, unordered_map<string, unsigned int> *vertex_map)
 {
@@ -297,36 +295,52 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
         char* strtok_state{};
         char* indice_str{};
 
-        if ((indice_str = strtok_r(face_vertex, "/", &strtok_state)))
-        {
-            v = stoi(indice_str) - 1; //make index start at 0
-        }
-        if ((indice_str = strtok_r(NULL, "/", &strtok_state)))
-        {
-            vt = stoi(indice_str) - 1;
-        }
-        if ((indice_str = strtok_r(NULL, "/", &strtok_state)))
-        {
-            vn = stoi(indice_str) - 1;
-        }
+        int count = sscanf(face_vertex, "%u/%u/%u", &v, &vt, &vn);
         //create vertex using indicesCylinder
         Vertex vertex;
-        //pos
-        vertex.x = input_buffers.vertices.at(v * 3);
-        vertex.y = input_buffers.vertices.at((v * 3) + 1);
-        vertex.z = input_buffers.vertices.at((v * 3) + 2);
-        //texcoord
-        if (vt != INT_MAX)
-        { 
+        switch (count)
+        {
+            case 2:
+                --v;
+                vertex.x = input_buffers.vertices.at(v * 3);
+                vertex.y = input_buffers.vertices.at((v * 3) + 1);
+                vertex.z = input_buffers.vertices.at((v * 3) + 2);
+                //texcoord
+                if (vt != INT_MAX)
+                { 
+                    --vt;
+                    vertex.tx = input_buffers.tex_coords.at(vt * 3);
+                    vertex.ty = input_buffers.tex_coords.at((vt * 3) + 1);
+                }
+                //normal
+                if (vn != INT_MAX)
+                {
+                    --vn;
+                    vertex.nx = input_buffers.normals.at(vn * 3);
+                    vertex.ny = input_buffers.normals.at((vn * 3) + 1);
+                    vertex.nz = input_buffers.normals.at((vn * 3) + 2);
+                }
+                break;
+            case 3:
+                --vn;
+                --vt;
                 vertex.tx = input_buffers.tex_coords.at(vt * 3);
                 vertex.ty = input_buffers.tex_coords.at((vt * 3) + 1);
-        }
-        //normal
-        if (vn != INT_MAX)
-        {
-            vertex.nx = input_buffers.normals.at(vn * 3);
-            vertex.ny = input_buffers.normals.at((vn * 3) + 1);
-            vertex.nz = input_buffers.normals.at((vn * 3) + 2);
+                vertex.nx = input_buffers.normals.at(vn * 3);
+                vertex.ny = input_buffers.normals.at((vn * 3) + 1);
+                vertex.nz = input_buffers.normals.at((vn * 3) + 2);
+            case 1:
+                //pos
+                --v;
+                vertex.x = input_buffers.vertices.at(v * 3);
+                vertex.y = input_buffers.vertices.at((v * 3) + 1);
+                vertex.z = input_buffers.vertices.at((v * 3) + 2);
+
+                break;
+            default:
+                std::cerr << "ERROR: Invalid face format." << std::endl;
+                break;
+
         }
         //push vertex to final buffer
         out_buf.vertices.push_back(vertex);

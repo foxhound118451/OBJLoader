@@ -125,6 +125,11 @@ void draw_model(Model model, Shader shader)
     for (int i = 0; i < size; ++i)
     {
         Mesh mesh = model.meshes.at(i);
+        Material mat;
+        if (auto search = model.materials.find(mesh.data.material); search != model.materials.end())
+        {
+            mat = (Material) search->second;
+        }
         if (mesh.ambient_map)
         {
             glActiveTexture(GL_TEXTURE0);
@@ -144,6 +149,9 @@ void draw_model(Model model, Shader shader)
             shader.setInt("specular_map", 2);
         }
 
+        shader.setVec3("ambient_mod", mat.ambient.r, mat.ambient.g, mat.ambient.b);
+        shader.setVec3("diffuse_mod", mat.diffuse.r, mat.diffuse.g, mat.diffuse.b);
+        shader.setVec3("specular_mod", mat.specular.r, mat.specular.g, mat.specular.b);
         glBindVertexArray(mesh.VAO);
         glDrawElements(GL_TRIANGLES, mesh.data.indices.size(), GL_UNSIGNED_INT, 0);
     }

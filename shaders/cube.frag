@@ -17,6 +17,10 @@ uniform sampler2D ambient_map;
 uniform sampler2D diffuse_map;
 uniform sampler2D specular_map;
 
+uniform int has_ambient_map = 0;
+uniform int has_diffuse_map = 0;
+uniform int has_specular_map = 0;
+
 void main()
 {
 	vec3 specular = vec3(1.0f);
@@ -30,6 +34,10 @@ void main()
 	float diff = max(dot(lightDir, norm), 0.0f);
 	vec3 diffuse = diffuse_mod * diff * lightColor;
 	
-	vec3 result = (ambient + diffuse);
-	FragColor = texture(diffuse_map, TexCoord) * vec4(result, 1.0f);
+	vec4 result = vec4(ambient + diffuse, 1.0f);
+        if (has_diffuse_map == 1)
+        {
+            result = texture(diffuse_map, TexCoord) * result;
+        }
+	FragColor = result;
 }
