@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
 	cout << "Read " << obj.vertice_count << " vertices, " << obj.indice_count << " indices." << endl;
 
 
-        //Model prism = load_model(load_obj("models/prism.obj"));
+        Model prism = load_model(load_obj("models/prism.obj"));
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	prev_x = s_width / 2.0f;
@@ -126,6 +126,7 @@ int main(int argc, char* argv[])
 		//draw model
 		mat4 model = mat4(1.0f);
 		model = translate(model, vec3(0.0f, 2.0f, -3.0f));
+                model = scale(model, vec3(0.1f));
 		shader.setMat4("model", model);
 		shader.setMat4("view", view);
 		shader.setMat4("projection", projection);
@@ -143,7 +144,7 @@ int main(int argc, char* argv[])
                 lightPos = vec3(1.0f, 3.0f, 1.0f);
 		model = translate(model, lightPos);
 		light.setMat4("model", model);
-		//draw_model(prism, shader);
+		draw_model(prism, shader);
 		//glDrawArrays(GL_TRIANGLES, 0, 36);
 		
 		glfwSwapBuffers(window);

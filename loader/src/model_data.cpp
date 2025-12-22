@@ -309,8 +309,8 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
                 if (vt != INT_MAX)
                 { 
                     --vt;
-                    vertex.tx = input_buffers.tex_coords.at(vt * 3);
-                    vertex.ty = input_buffers.tex_coords.at((vt * 3) + 1);
+                    vertex.tx = (input_buffers.tex_coords.at(vt * 3));
+                    vertex.ty = 1 - (input_buffers.tex_coords.at((vt * 3) + 1));
                 }
                 //normal
                 if (vn != INT_MAX)
@@ -324,8 +324,8 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
             case 3:
                 --vn;
                 --vt;
-                vertex.tx = input_buffers.tex_coords.at(vt * 3);
-                vertex.ty = input_buffers.tex_coords.at((vt * 3) + 1);
+                vertex.tx = (input_buffers.tex_coords.at(vt * 3));
+                vertex.ty = 1 - (input_buffers.tex_coords.at((vt * 3) + 1));
                 vertex.nx = input_buffers.normals.at(vn * 3);
                 vertex.ny = input_buffers.normals.at((vn * 3) + 1);
                 vertex.nz = input_buffers.normals.at((vn * 3) + 2);
@@ -342,7 +342,7 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
                 break;
 
         }
-        //push vertex to final buffer
+        //push vertex to mesh buffer 
         out_buf.vertices.push_back(vertex);
         return cur_index;
     }

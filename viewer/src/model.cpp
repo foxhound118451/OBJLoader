@@ -135,18 +135,21 @@ void draw_model(Model model, Shader shader)
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, mesh.ambient_map);
             shader.setInt("ambient_map", 0);
+            shader.setInt("has_ambient_map", 1);
         }
         if (mesh.diffuse_map)
         {
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, mesh.diffuse_map);
             shader.setInt("diffuse_map", 1);
+            shader.setInt("has_diffuse_map", 1);
         }
         if (mesh.specular_map)
         {
             glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, mesh.specular_map);
             shader.setInt("specular_map", 2);
+            shader.setInt("has_specular_map", 1);
         }
 
         shader.setVec3("ambient_mod", mat.ambient.r, mat.ambient.g, mat.ambient.b);
