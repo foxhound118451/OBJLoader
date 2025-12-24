@@ -2,22 +2,41 @@
 * Temporary file used for debugging model loader.
 */
 
-#include <glad/gl.h>
+#define NANOGUI_USE_OPENGL
+#define NANOGUI_GLAD
+#if defined(NANOGUI_GLAD)
+    #if defined(NANOGUI_SHARED) && !defined(GLAD_GLAPI_EXPORT)
+        #define GLAD_GLAPI_EXPORT
+    #endif
+
+    #include <glad/gl.h>
+#else
+    #if defined(__APPLE__)
+        #define GLFW_INCLUDE_GLCOREARB
+    #else
+        #define GL_GLEXT_PROTOTYPES
+    #endif
+#endif
+
 #include <GLFW/glfw3.h>
+#include <nanogui/nanogui.h>
+
+#include <string>
+#include <iostream>
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 using namespace glm;
 using namespace std;
-#include <string>
-#include <iostream>
-#include <filesystem>
 
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
 
 GLFWwindow* window = NULL;
+nanogui::Screen* screen = NULL;
+
 float cameraSensitivity = 100.0f;
 float cameraSpeed = 10.0f;
 float deltaTime = 0.0f;
@@ -56,16 +75,28 @@ int main(int argc, char* argv[])
     }
     glfwMakeContextCurrent(window);
 
+#if defined(NANOGUI_GLAD)
     if (!gladLoadGL(glfwGetProcAddress))
     {
         cout << "Failed to initialize GLAD" << endl;
         return -1;
     }
+#endif
 
     //set callbacks
     glfwSetCursorPosCallback(window, cursorPosCallback);
     glfwSetWindowSizeCallback(window, windowSizeCallback);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height) {
+            screen->resize_callback_event(width,height);
+            }
+    );
+    glfwSetMouseButtonCallback(window, [](GLFWwindow *, int button, int action, int mods) {
+            screen->key_callback_event(button, action, action, mods);
+            }
+    );
     
+
+
     glViewport(0, 0, s_width, s_height);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -79,7 +110,8 @@ int main(int argc, char* argv[])
     vec3 cameraPos = vec3(0.0f, 0.0f, 2.0f);
     vec3 lightPos = vec3(1.0f, 1.5f, 2.0f);
 
-    glEnable(GL_DEPTH_TEST);
+
+
 
     Model obj;
     switch (argc)
@@ -100,16 +132,36 @@ int main(int argc, char* argv[])
 
     Model prism = load_model(load_obj("models/prism.obj"));
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     prev_x = s_width / 2.0f;
     prev_y = s_height / 2.0f;
 
+    //init nanogui screen
+    screen = new nanogui::Screen();
+    screen->initialize(window, true);
+    //create nanogui gui
+    bool enabled = true;
+    nanogui::FormHelper *gui = new nanogui::FormHelper(screen);
+    nanogui::ref<nanogui::Window> nanogui_window = gui->add_window(nanogui::Vector2i(10,10), "Form helper example");
+
+    gui->add_group("Basic types");
+    bool bvar = false;
+    string strval;
+    gui->add_variable("bool", bvar)->set_tooltip("Test tooltip");
+    gui->add_variable("string", strval);
+    screen->set_visible(true);
+    screen->perform_layout();
+    nanogui_window->center();
+
+
+
     while (!glfwWindowShouldClose(window))
     {
+        glEnable(GL_DEPTH_TEST);
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         processInput(window);
+
 
         glViewport(0, 0, s_width, s_height);
         glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
@@ -136,7 +188,6 @@ int main(int argc, char* argv[])
         shader.setMat4("projection", projection);
         shader.setVec3("objectColor", 0.5, 0.5, 0.9);
         draw_model(obj, shader);
-        int i = glGetError();
 
         //light;
         light.use();
@@ -150,8 +201,11 @@ int main(int argc, char* argv[])
         light.setMat4("model", model);
         draw_model(prism, shader);
         //glDrawArrays(GL_TRIANGLES, 0, 36);
-        
+
+        screen->draw_widgets();
         glfwSwapBuffers(window);
+
+
         glfwPollEvents();
     }
 
@@ -209,6 +263,7 @@ static void windowSizeCallback(GLFWwindow* window, int width, int height)
 
 static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 {
+    screen->cursor_pos_callback_event(xpos, ypos);
     double cur_x = xpos;
     double cur_y = ypos;
     double xoffset = (xpos - prev_x) * cameraSensitivity * deltaTime;

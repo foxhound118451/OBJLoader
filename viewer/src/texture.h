@@ -1,8 +1,21 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
+#if defined(NANOGUI_GLAD)
+    #if defined(NANOGUI_SHARED) && !defined(GLAD_GLAPI_EXPORT)
+        #define GLAD_GLAPI_EXPORT
+    #endif
+
+    #include <glad/gl.h>
+#else
+    #if defined(__APPLE__)
+        #define GLFW_INCLUDE_GLCOREARB
+    #else
+        #define GL_GLEXT_PROTOTYPES
+    #endif
+#endif
+
 #include <iostream>
-#include "glad/gl.h"
 #include "stb_image.h"
 
 unsigned int load_texture(char* path)

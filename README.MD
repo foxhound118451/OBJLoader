@@ -1,16 +1,19 @@
 # **OBJ Loader**
 
-Wavefront .obj 3d model file parser and viewer.
+Wavefront .obj 3d model file loader and viewer.
 
-Very unfinished, only supports a small subset of the .obj spec.<br/>
+The viewer is dependent on the loader, loader is independent.<br/>
 
-Currently parses vertices, normals, and faces. Faces are converted into tris, and 
-resulting vertices/indices are stored in a Mesh struct. Larger files will cause 
-it to hang.
+## Usage
+Currently only tested on Linux.
+
+./viewer/OBJViewer [path] [size].<br/>
+
+Size sets the model's scale.
 
 ## Compilation
 Install & link listed dependencies, build using CMake.
 
-# Dependencies
-Link GLFW 3.4, and GLM.
-GLAD2 and STB_IMAGE are used, but are included in source.
+# Build Dependencies
+Link [NanoGUI](https://github.com/mitsuba-renderer/nanogui), [GLFW 3.4 Core](https://www.glfw.org), and [GLM](https://github.com/g-truc/glm).
+[GLAD2](https://github.com/Dav1dde/glad) and [STB_IMAGE](https://github.com/nothings/stb) are used, but are included in source.

@@ -15,6 +15,7 @@ target_link_libraries(OBJViewer
    PRIVATE
       glfw
       glm
+      nanogui
       objloader
 )
 add_custom_command(

@@ -1,9 +1,25 @@
+#define NANOGUI_GLAD
+#define NANOGUI_USE_OPENGL
+#if defined(NANOGUI_GLAD)
+    #if defined(NANOGUI_SHARED) && !defined(GLAD_GLAPI_EXPORT)
+        #define GLAD_GLAPI_EXPORT
+    #endif
+
+    #include <glad/gl.h>
+#else
+    #if defined(__APPLE__)
+        #define GLFW_INCLUDE_GLCOREARB
+    #else
+        #define GL_GLEXT_PROTOTYPES
+    #endif
+#endif
+
+#include <GLFW/glfw3.h>
+#include <nanogui/nanogui.h>
 #include <vector>
 #include "model.h"
-#include "glad/gl.h"
 #include "texture.h"
 #include "shader.h"
-
 
 /**
  * Load mesh's data into appropriate OpenGL buffers,
