@@ -133,6 +133,7 @@ static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
                 }
                 break;
             }
+            case 'o':
             case 'g': //group
             {
                 //get name
@@ -140,7 +141,7 @@ static int parse_obj_file(const char *file_path, output_buffers* output_buffers)
                 strtok_r(line, " ", &strtok_state);
                 string name_str = strtok_r(NULL, " ", &strtok_state);
 
-                if(!mesh.name.empty())//previous mesh exists
+                if(!mesh.name.empty() && name_str != mesh.name) //previous mesh exists,
                 {
                     //push prev mesh
                     output_buffers->meshes.push_back(mesh);
@@ -296,7 +297,7 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
         char* indice_str{};
 
         int count = sscanf(face_vertex, "%u/%u/%u", &v, &vt, &vn);
-        //create vertex using indicesCylinder
+        //create vertex using indices
         Vertex vertex;
         switch (count)
         {
