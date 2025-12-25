@@ -2,7 +2,6 @@
 * Temporary file used for debugging model loader.
 */
 
-#define NANOGUI_USE_OPENGL
 #define NANOGUI_GLAD
 #if defined(NANOGUI_GLAD)
     #if defined(NANOGUI_SHARED) && !defined(GLAD_GLAPI_EXPORT)
@@ -48,6 +47,7 @@ int s_height = 720;
 float angle = 0.0f;
 float scale_num = 1.0f;
 
+
 //prototypes
 void processInput(GLFWwindow* window);
 static void windowSizeCallback(GLFWwindow* window, int width, int height);
@@ -83,17 +83,6 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    //set callbacks
-    glfwSetCursorPosCallback(window, cursorPosCallback);
-    glfwSetWindowSizeCallback(window, windowSizeCallback);
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height) {
-            screen->resize_callback_event(width,height);
-            }
-    );
-    glfwSetMouseButtonCallback(window, [](GLFWwindow *, int button, int action, int mods) {
-            screen->key_callback_event(button, action, action, mods);
-            }
-    );
     
 
 
@@ -109,9 +98,6 @@ int main(int argc, char* argv[])
 
     vec3 cameraPos = vec3(0.0f, 0.0f, 2.0f);
     vec3 lightPos = vec3(1.0f, 1.5f, 2.0f);
-
-
-
 
     Model obj;
     switch (argc)
@@ -138,30 +124,60 @@ int main(int argc, char* argv[])
     //init nanogui screen
     screen = new nanogui::Screen();
     screen->initialize(window, true);
+
     //create nanogui gui
-    bool enabled = true;
     nanogui::FormHelper *gui = new nanogui::FormHelper(screen);
-    nanogui::ref<nanogui::Window> nanogui_window = gui->add_window(nanogui::Vector2i(10,10), "Form helper example");
+    nanogui::ref<nanogui::Window> transform_window = gui->add_window(nanogui::Vector2i(10,10), "Model transformation");
 
-    gui->add_group("Basic types");
-    bool bvar = false;
-    string strval;
-    gui->add_variable("bool", bvar)->set_tooltip("Test tooltip");
-    gui->add_variable("string", strval);
+    gui->add_group("Position");
+
+    glm::vec3 model_pos = glm::vec3(0.0f);
+    glm::vec3 model_scale = glm::vec3(1.0f);
+    bool flip = false;
+    bool lock_axis = true;
+
+    gui->add_variable("X", model_pos.x, true)->set_spinnable(true);
+    gui->add_variable("Y", model_pos.y, true)->set_spinnable(true);
+    gui->add_variable("Z", model_pos.z, true)->set_spinnable(true);
+    gui->add_variable("Flip Texture Coordinates", flip)->set_tooltip("Test tooltip");
+
+    gui->add_group("Scale");
+    gui->add_variable("X", model_scale.x, true)->set_spinnable(true);
+    gui->add_variable("Y", model_scale.y, true)->set_spinnable(true);
+    gui->add_variable("Z", model_scale.z, true)->set_spinnable(true);
+    gui->add_variable("Lock scale axis:", lock_axis, true);
     screen->set_visible(true);
+
+    //layout
     screen->perform_layout();
-    nanogui_window->center();
 
-
+    //set callbacks
+    glfwSetCursorPosCallback(window, cursorPosCallback);
+    glfwSetWindowSizeCallback(window, windowSizeCallback);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height) {
+            screen->resize_callback_event(width,height);
+            }
+    );
+    glfwSetMouseButtonCallback(window, [](GLFWwindow *, int button, int action, int mods) {
+            screen->mouse_button_callback_event(button, action, mods);
+            }
+    );
+    glfwSetKeyCallback(window, [](GLFWwindow *, int key, int scancode, int action, int mods) {
+            screen->key_callback_event(key, scancode, action, mods);
+            }
+    );
+    glfwSetCharCallback(window, [](GLFWwindow *, unsigned int codepoint) {
+            screen->keyboard_character_event(codepoint);
+            }
+    );
 
     while (!glfwWindowShouldClose(window))
     {
         glEnable(GL_DEPTH_TEST);
+
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        processInput(window);
-
 
         glViewport(0, 0, s_width, s_height);
         glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
@@ -179,10 +195,9 @@ int main(int argc, char* argv[])
         shader.setVec3("lightPos", lightPos);
         shader.setVec3("ambient", vec3(0.6f, 0.6f, 0.2f));
 
-        //draw model
         mat4 model = mat4(1.0f);
-        model = translate(model, vec3(0.0f, 2.0f, -3.0f));
-        model = scale(model, vec3(scale_num));
+        model = translate(model, model_pos);
+        model = scale(model, model_scale);
         shader.setMat4("model", model);
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
@@ -200,13 +215,12 @@ int main(int argc, char* argv[])
         model = translate(model, lightPos);
         light.setMat4("model", model);
         draw_model(prism, shader);
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
 
         screen->draw_widgets();
+
         glfwSwapBuffers(window);
-
-
         glfwPollEvents();
+        processInput(window);
     }
 
     glfwTerminate();
@@ -263,14 +277,14 @@ static void windowSizeCallback(GLFWwindow* window, int width, int height)
 
 static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 {
-    screen->cursor_pos_callback_event(xpos, ypos);
-    double cur_x = xpos;
-    double cur_y = ypos;
-    double xoffset = (xpos - prev_x) * cameraSensitivity * deltaTime;
-    double yoffset = (prev_y - ypos) * cameraSensitivity * deltaTime;
-    prev_x = cur_x;
-    prev_y = cur_y;
+   screen->cursor_pos_callback_event(xpos, ypos);
+   // double cur_x = xpos;
+   // double cur_y = ypos;
+   // double xoffset = (xpos - prev_x) * cameraSensitivity * deltaTime;
+   // double yoffset = (prev_y - ypos) * cameraSensitivity * deltaTime;
+   // prev_x = cur_x;
+   // prev_y = cur_y;
 
-    camera.yaw += xoffset;
-    camera.pitch += yoffset;
+   // camera.yaw += xoffset;
+   // camera.pitch += yoffset;
 }

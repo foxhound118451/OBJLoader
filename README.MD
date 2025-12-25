@@ -14,6 +14,6 @@ Size sets the model's scale.
 ## Compilation
 Install & link listed dependencies, build using CMake.
 
-# Build Dependencies
-Link [NanoGUI](https://github.com/mitsuba-renderer/nanogui), [GLFW 3.4 Core](https://www.glfw.org), and [GLM](https://github.com/g-truc/glm).
+### Build Dependencies
+Link [NanoGUI](https://github.com/mitsuba-renderer/nanogui), [GLFW 3.4 Core](https://www.glfw.org), and [GLM](https://github.com/g-truc/glm). <br/>
 [GLAD2](https://github.com/Dav1dde/glad) and [STB_IMAGE](https://github.com/nothings/stb) are used, but are included in source.

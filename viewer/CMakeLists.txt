@@ -11,6 +11,7 @@ target_include_directories(OBJViewer
       ../include
       src
 )
+find_package(nanogui)
 target_link_libraries(OBJViewer
    PRIVATE
       glfw
