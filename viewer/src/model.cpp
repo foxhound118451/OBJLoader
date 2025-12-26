@@ -1,5 +1,4 @@
 #define NANOGUI_GLAD
-#define NANOGUI_USE_OPENGL
 #if defined(NANOGUI_GLAD)
     #if defined(NANOGUI_SHARED) && !defined(GLAD_GLAPI_EXPORT)
         #define GLAD_GLAPI_EXPORT
@@ -108,6 +107,7 @@ Model load_model(ModelData model_data)
 {
     Model model;
 
+    model.scale_factor = model_data.scale_factor;
     model.path = model_data.path;
     //get model name from path
     std::string dir = model_data.path; 

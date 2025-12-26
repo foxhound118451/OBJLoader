@@ -40,6 +40,7 @@ struct ModelData
     std::string path; //path of model
     std::vector<MeshData> meshes;
     std::unordered_map<std::string, Material> materials;
+    float scale_factor = 0.0f; //largest abs value of vertex position
 };
 
 

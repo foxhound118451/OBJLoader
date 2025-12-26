@@ -37,6 +37,7 @@ static vector<unsigned int> fan_triangulate(vector<unsigned int>* face);
 
 //global vars
 char* obj_path = NULL;
+float largest = 0.0f;
 
 /*
 	Parse Wavefront .obj file into ModelData struct
@@ -55,6 +56,7 @@ ModelData load_obj(const char* path)
     ModelData model;
     model.path = path;
     model.materials = out_buf->materials;
+    model.scale_factor = largest;
     int size = out_buf->meshes.size();
     for (int i = 0; i < size; ++i)
     {
@@ -299,6 +301,8 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
         int count = sscanf(face_vertex, "%u/%u/%u", &v, &vt, &vn);
         //create vertex using indices
         Vertex vertex;
+        float largest_component = 0.0f;
+
         switch (count)
         {
             case 2:
@@ -306,6 +310,8 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
                 vertex.x = input_buffers.vertices.at(v * 3);
                 vertex.y = input_buffers.vertices.at((v * 3) + 1);
                 vertex.z = input_buffers.vertices.at((v * 3) + 2);
+                largest_component = max(abs(vertex.x), abs(vertex.y));
+                largest = max(largest_component, abs(vertex.z));
                 //texcoord
                 if (vt != INT_MAX)
                 { 
@@ -336,6 +342,8 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
                 vertex.x = input_buffers.vertices.at(v * 3);
                 vertex.y = input_buffers.vertices.at((v * 3) + 1);
                 vertex.z = input_buffers.vertices.at((v * 3) + 2);
+                largest_component = max(abs(vertex.x), abs(vertex.y));
+                largest = max(largest_component, abs(vertex.z));
 
                 break;
             default:
