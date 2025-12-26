@@ -21,7 +21,7 @@ struct Material
 	Color diffuse; //'Kd' diffuse
 	Color specular; //'Ks' specular
 	Color transmission_filter; //'Tf' transmission filter
-	float specular_pow; //'Ns' specular exponent 
+	float specular_pow = 32.0f; //'Ns' specular exponent 
 	float optical_density; //'Ni' index of refraction
 	float dissolve; //'d' opacity
 	char ambient_map[256]{}; //'map_Ka' ambient map path

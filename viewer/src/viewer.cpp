@@ -43,6 +43,8 @@ int s_height = 720;
 float rotation_speed = 0.0f;
 float FOV = 75.0f;
 
+glm::vec3 model_pos(0.0f);
+
 //prototypes
 void processInput(GLFWwindow* window);
 static void windowSizeCallback(GLFWwindow* window, int width, int height);
@@ -93,7 +95,7 @@ int main(int argc, char* argv[])
     Shader light = Shader("shaders/model.vert", "shaders/light.frag");
 
     vec3 cameraPos = vec3(0.0f, 0.0f, 0.0f);
-    vec3 lightPos = vec3(1.0f, 1.5f, 2.0f);
+    vec3 lightPos = vec3(0.0f, 1.5f, 1.0f);
 
     Model obj;
     if (argc == 2)
@@ -124,22 +126,17 @@ int main(int argc, char* argv[])
 
     gui->add_group("Position");
 
-    glm::vec3 model_pos = glm::vec3(0.0f);
     glm::vec3 model_scale = glm::vec3(1/obj.scale_factor); //normalize model scale 
     float rotation_angle = 0.0f;
-    bool flip = false;
-    bool lock_axis = true;
 
     gui->add_variable("X", model_pos.x, true)->set_spinnable(true);
     gui->add_variable("Y", model_pos.y, true)->set_spinnable(true);
     gui->add_variable("Z", model_pos.z, true)->set_spinnable(true);
-    gui->add_variable("Flip Texture Coordinates", flip)->set_tooltip("Test tooltip");
 
     gui->add_group("Scale");
     gui->add_variable("X", model_scale.x, true)->set_spinnable(true);
     gui->add_variable("Y", model_scale.y, true)->set_spinnable(true);
     gui->add_variable("Z", model_scale.z, true)->set_spinnable(true);
-    gui->add_variable("Lock scale axis:", lock_axis, true);
 
     gui->add_group("Rotation");
     gui->add_variable("Angle (Radians)", rotation_angle, true)->set_spinnable(true);
@@ -204,7 +201,6 @@ int main(int argc, char* argv[])
         {
             rotation_speed -= (rotation_speed * 0.9f * deltaTime);
         }
-        std::cout << rotation_speed << std::endl;
 
         mat4 model = mat4(1.0f);
         model = translate(model, model_pos);
@@ -214,6 +210,7 @@ int main(int argc, char* argv[])
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
         shader.setVec3("objectColor", 0.5, 0.5, 0.9);
+        shader.setVec3("ViewPos", camera.position);
         draw_model(obj, shader);
 
         //light;
@@ -263,14 +260,14 @@ void processInput(GLFWwindow* window)
    // {
    //     camera.position += camera.front *= cameraSpeed * deltaTime;
    // }
-   // if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-   // {
-   //     camera.position += normalize(camera.worldUp) *= cameraSpeed * deltaTime;
-   // }
-   // if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-   // {
-   //     camera.position -= normalize(camera.worldUp) *= cameraSpeed * deltaTime;
-   // }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        model_pos.y += 2.5f * deltaTime;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    {
+        model_pos.y -= 2.5f * deltaTime;
+    }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
         rotation_speed -= 0.05f * deltaTime;
@@ -278,6 +275,22 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
         rotation_speed += 0.05f * deltaTime;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    {
+        model_pos.x -= 2.5f * deltaTime;
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    {
+        model_pos.x += 2.5f * deltaTime;
+    }
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        model_pos.z -= 2.5f * deltaTime;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        model_pos.z += 2.5f * deltaTime;
     }
 }
 

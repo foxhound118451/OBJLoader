@@ -171,6 +171,8 @@ void draw_model(Model model, Shader shader)
         shader.setVec3("ambient_mod", mat.ambient.r, mat.ambient.g, mat.ambient.b);
         shader.setVec3("diffuse_mod", mat.diffuse.r, mat.diffuse.g, mat.diffuse.b);
         shader.setVec3("specular_mod", mat.specular.r, mat.specular.g, mat.specular.b);
+        shader.setFloat("specular_pow", mat.specular_pow);
+
         glBindVertexArray(mesh.VAO);
         glDrawElements(GL_TRIANGLES, mesh.data.indices.size(), GL_UNSIGNED_INT, 0);
     }
