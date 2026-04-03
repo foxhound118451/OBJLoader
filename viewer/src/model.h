@@ -20,7 +20,7 @@ struct Model
     std::unordered_map<std::string, unsigned int> textures;
     std::string name{};
     std::string path{};
-    float scale_factor = 0.0f;
+    bounding_box bounds;
     unsigned int vertice_count = 0; //store counts
     unsigned int indice_count = 0;
     unsigned int material_count = 0;

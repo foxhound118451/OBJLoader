@@ -107,7 +107,7 @@ Model load_model(ModelData model_data)
 {
     Model model;
 
-    model.scale_factor = model_data.scale_factor;
+    model.bounds = model_data.bounds;
     model.path = model_data.path;
     //get model name from path
     std::string dir = model_data.path; 

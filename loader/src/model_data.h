@@ -26,6 +26,17 @@ struct Vertex
 	float nz = NAN;
 };
 
+//track extents of axis-aligned bounding box
+struct bounding_box
+{
+    float min_x = 0.0f;
+    float max_x = 0.0f;
+    float min_y = 0.0f;
+    float max_y = 0.0f;
+    float min_z = 0.0f;
+    float max_z = 0.0f;
+};
+
 struct MeshData
 {
     std::string name; 
@@ -40,8 +51,9 @@ struct ModelData
     std::string path; //path of model
     std::vector<MeshData> meshes;
     std::unordered_map<std::string, Material> materials;
-    float scale_factor = 0.0f; //largest abs value of vertex position
+    bounding_box bounds;
 };
+
 
 
 //prototypes;

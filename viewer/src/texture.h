@@ -52,6 +52,7 @@ unsigned int load_texture(char* path)
     else
     {
         std::cerr << "ERROR: Failed to load texture from path: '" << path << "'." << std::endl;
+        return NULL;
     }
 
     stbi_image_free(data);
