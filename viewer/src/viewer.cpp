@@ -19,6 +19,7 @@
 #include <string>
 #include <iostream>
 #include <filesystem>
+#include <chrono>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -50,7 +51,7 @@ void processInput(GLFWwindow* window);
 static void windowSizeCallback(GLFWwindow* window, int width, int height);
 static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 
-Camera camera(vec3(0.0, 0.5f, 2.25f), vec3(0.0, 1.0f, 0.0f));
+Camera camera(vec3(0.0, 1.0f, 4.5f), vec3(0.0, 1.0f, 0.0f));
 
 int main(int argc, char* argv[])
 {
@@ -81,9 +82,6 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    
-
-
     glViewport(0, 0, s_width, s_height);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -95,12 +93,18 @@ int main(int argc, char* argv[])
     Shader light = Shader("shaders/model.vert", "shaders/light.frag");
 
     vec3 cameraPos = vec3(0.0f, 0.0f, 0.0f);
-    vec3 lightPos = vec3(0.0f, 1.5f, 1.0f);
+    vec3 lightPos = vec3(0.0f, 5.0f, 1.0f);
 
     Model obj;
     if (argc == 2)
     {
+        auto start = std::chrono::high_resolution_clock::now();
         obj = load_model(load_obj(argv[1]));
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+
+        cout << "Time elapsed: " << duration.count() << " ms." << endl;
+        cout << "Read " << obj.vertice_count << " vertices, " << obj.indice_count << " indices." << endl;
     }
     else
     {
@@ -108,7 +112,6 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    cout << "Read " << obj.vertice_count << " vertices, " << obj.indice_count << " indices." << endl;
 
 
     Model prism = load_model(load_obj("models/prism.obj"));
@@ -122,11 +125,14 @@ int main(int argc, char* argv[])
 
     //create nanogui gui
     nanogui::FormHelper *gui = new nanogui::FormHelper(screen);
-    nanogui::ref<nanogui::Window> transform_window = gui->add_window(nanogui::Vector2i(10,10), "Model transformation");
+    nanogui::ref<nanogui::Window> transform_window = gui->add_window(nanogui::Vector2i(10,10), "Model Transformation");
 
     gui->add_group("Position");
 
-    glm::vec3 model_scale = glm::vec3(1/obj.scale_factor); //normalize model scale 
+    float scale_factor = glm::max(abs(obj.bounds.min_x), obj.bounds.max_x);
+    scale_factor = glm::max(glm::max(abs(obj.bounds.min_y), obj.bounds.max_y), scale_factor);
+    scale_factor = glm::max(glm::max(abs(obj.bounds.min_z), obj.bounds.max_z), scale_factor);
+    glm::vec3 model_scale = glm::vec3(1/scale_factor); //normalize model scale to fit in view
     float rotation_angle = 0.0f;
 
     gui->add_variable("X", model_pos.x, true)->set_spinnable(true);
@@ -168,12 +174,13 @@ int main(int argc, char* argv[])
 
     while (!glfwWindowShouldClose(window))
     {
-        glEnable(GL_DEPTH_TEST);
-
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glViewport(0, 0, s_width, s_height);
         glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

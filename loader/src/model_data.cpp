@@ -1,4 +1,5 @@
 #include <glad/gl.h>
+#include <glm/glm.hpp>
 #include <limits.h>
 #include <GLFW/glfw3.h>
 #include <model_data.h>
@@ -26,6 +27,8 @@ struct output_buffers
     unordered_map<string, Material> materials;
 };
 
+//track extents of axis-aligned bounding box
+bounding_box bounds;
 
 //prototypes
 static int parse_obj_file(const char* file_path, output_buffers* out_buf);
@@ -37,7 +40,6 @@ static vector<unsigned int> fan_triangulate(vector<unsigned int>* face);
 
 //global vars
 char* obj_path = NULL;
-float largest = 0.0f;
 
 /*
 	Parse Wavefront .obj file into ModelData struct
@@ -52,11 +54,9 @@ ModelData load_obj(const char* path)
     //{
         //parse faces, use indices to create final vertex & indice array.
 
-
     ModelData model;
     model.path = path;
     model.materials = out_buf->materials;
-    model.scale_factor = largest;
     int size = out_buf->meshes.size();
     for (int i = 0; i < size; ++i)
     {
@@ -64,6 +64,7 @@ ModelData load_obj(const char* path)
         model.meshes.push_back(mesh);
     }
     delete out_buf;
+    model.bounds = bounds;
     return model;
 
     //}
@@ -301,7 +302,6 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
         int count = sscanf(face_vertex, "%u/%u/%u", &v, &vt, &vn);
         //create vertex using indices
         Vertex vertex;
-        float largest_component = 0.0f;
 
         switch (count)
         {
@@ -310,8 +310,12 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
                 vertex.x = input_buffers.vertices.at(v * 3);
                 vertex.y = input_buffers.vertices.at((v * 3) + 1);
                 vertex.z = input_buffers.vertices.at((v * 3) + 2);
-                largest_component = max(abs(vertex.x), abs(vertex.y));
-                largest = max(largest_component, abs(vertex.z));
+                bounds.min_x = min(bounds.min_x, vertex.x);
+                bounds.max_x = max(bounds.max_x, vertex.x);
+                bounds.min_y = min(bounds.min_y, vertex.y);
+                bounds.max_y = max(bounds.max_y, vertex.y);
+                bounds.min_z = min(bounds.min_z, vertex.z);
+                bounds.max_z = max(bounds.max_z, vertex.z);
                 //texcoord
                 if (vt != INT_MAX)
                 { 
@@ -342,8 +346,12 @@ static inline unsigned int parse_face_vertex(char* face_vertex, input_buffers& i
                 vertex.x = input_buffers.vertices.at(v * 3);
                 vertex.y = input_buffers.vertices.at((v * 3) + 1);
                 vertex.z = input_buffers.vertices.at((v * 3) + 2);
-                largest_component = max(abs(vertex.x), abs(vertex.y));
-                largest = max(largest_component, abs(vertex.z));
+                bounds.min_x = min(bounds.min_x, vertex.x);
+                bounds.max_x = max(bounds.max_x, vertex.x);
+                bounds.min_y = min(bounds.min_y, vertex.y);
+                bounds.max_y = max(bounds.max_y, vertex.y);
+                bounds.min_z = min(bounds.min_z, vertex.z);
+                bounds.max_z = max(bounds.max_z, vertex.z);
 
                 break;
             default:
